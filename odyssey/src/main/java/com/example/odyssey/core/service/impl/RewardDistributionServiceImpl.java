@@ -5,7 +5,7 @@ import com.example.odyssey.bean.SingleResponse;
 import com.example.odyssey.bean.cmd.RewardDistributionCmd;
 import com.example.odyssey.bean.dto.RewardDistributionDTO;
 import com.example.odyssey.common.RebateEnum;
-import com.example.odyssey.common.RewardDistributionStatus;
+import com.example.odyssey.common.RewardDistributionStatusEnum;
 import com.example.odyssey.core.service.RewardDistributionService;
 import com.example.odyssey.model.entity.OdsConfig;
 import com.example.odyssey.model.entity.RewardDistributionRecord;
@@ -17,8 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
-import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -58,13 +56,14 @@ public class RewardDistributionServiceImpl implements RewardDistributionService 
                         rewardDistributionRecord.setNumber(rewardDistributionDTO.getNumber());
                         rewardDistributionRecord.setRewardType(RebateEnum.ODS.getCode());
                         rewardDistributionRecord.setCreateTime(System.currentTimeMillis());
-                        rewardDistributionRecord.setRewardStatus(RewardDistributionStatus.UNISSUED.getCode());
+                        rewardDistributionRecord.setRewardStatus(RewardDistributionStatusEnum.UNISSUED.getCode());
                         rewardDistributionRecordMapper.insert(rewardDistributionRecord);
                     }
 
                 });
 
-
         return null;
     }
+
+
 }

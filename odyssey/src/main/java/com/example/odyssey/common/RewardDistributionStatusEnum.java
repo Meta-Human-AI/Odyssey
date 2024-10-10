@@ -3,7 +3,7 @@ package com.example.odyssey.common;
 import lombok.Getter;
 
 @Getter
-public enum RewardDistributionStatus {
+public enum RewardDistributionStatusEnum {
 
     UNISSUED("unissued", "未发放"),
 
@@ -13,16 +13,16 @@ public enum RewardDistributionStatus {
 
     private String name;
 
-    RewardDistributionStatus(String code, String name) {
+    RewardDistributionStatusEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
 
-    public static RewardDistributionStatus of(String code) {
+    public static RewardDistributionStatusEnum of(String code) {
         if (code == null) {
             return null;
         }
-        for (RewardDistributionStatus status : RewardDistributionStatus.values()) {
+        for (RewardDistributionStatusEnum status : RewardDistributionStatusEnum.values()) {
             if (code.equals(status.code)) {
                 return status;
             }
