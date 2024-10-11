@@ -84,7 +84,7 @@ public class RecommendServiceImpl implements RecommendService {
 
                         QueryWrapper<RecommendCoreLog> queryWrapper = new QueryWrapper<>();
                         queryWrapper.eq("recommend_core", randomAlphabetic);
-                        Integer count = recommendCoreLogMapper.selectCount(queryWrapper);
+                        Long count = recommendCoreLogMapper.selectCount(queryWrapper);
 
                         if (count == 0) {
                             break;
@@ -127,7 +127,7 @@ public class RecommendServiceImpl implements RecommendService {
 
             QueryWrapper<Recommend> queryWrapper = new QueryWrapper<>();
             queryWrapper.eq("wallet_address", recommendCreateCmd.getWalletAddress());
-            Integer count = recommendMapper.selectCount(queryWrapper);
+            Long count = recommendMapper.selectCount(queryWrapper);
 
             if (count > 0) {
                 return SingleResponse.buildFailure("已推荐过");
@@ -169,7 +169,7 @@ public class RecommendServiceImpl implements RecommendService {
 
         QueryWrapper<Recommend> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("wallet_address", recommendLeaderCreateCmd.getWalletAddress());
-        Integer count = recommendMapper.selectCount(queryWrapper);
+        Long count = recommendMapper.selectCount(queryWrapper);
         if (count > 0) {
             return SingleResponse.buildFailure("已添加");
         }

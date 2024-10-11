@@ -1,31 +1,33 @@
 package com.example.odyssey.model.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import lombok.Data;
 
 @Data
-public class BscScanTransaction {
+public class BscScanAccountTransaction {
 
     @TableId(type = IdType.INPUT)
     private Integer id;
 
-    private String blockNumber;
+    private Long blockNumber;
 
     private String blockHash;
 
     private String timeStamp;
-
+    @TableField("`hash`")
     private String hash;
 
     private String nonce;
 
     private String transactionIndex;
 
+    @TableField("`from`")
     private String from;
-
+    @TableField("`to`")
     private String to;
-
+    @TableField("`value`")
     private String value;
 
     private String gas;

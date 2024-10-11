@@ -1,0 +1,49 @@
+package com.example.odyssey.bean.dto;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Data;
+
+@Data
+public class BscScanAccountTransactionDTO {
+
+    private String blockNumber;
+
+    private String blockHash;
+
+    private String timeStamp;
+
+    private String hash;
+
+    private String nonce;
+
+    private String transactionIndex;
+
+    private String from;
+
+    private String to;
+
+    private String value;
+
+    private String gas;
+
+    private String gasPrice;
+
+    private String input;
+
+    private String methodId;
+
+    private String functionName;
+
+    private String contractAddress;
+
+    private String isError;
+
+    private String cumulativeGasUsed;
+
+    private String gasUsed;
+
+    private String confirmations;
+
+    @JsonProperty("txreceipt_status")
+    private String receiptStatus;
+}

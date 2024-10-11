@@ -15,7 +15,7 @@ import javax.annotation.Resource;
 
 @RestController
 @RequestMapping("/v1/admin/rebate/config")
-public class RebateConfigController {
+public class AdminRebateConfigController {
 
     @Resource
     private RebateConfigService rebateConfigService;

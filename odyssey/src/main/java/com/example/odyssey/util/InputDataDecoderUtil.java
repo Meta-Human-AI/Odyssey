@@ -1,9 +1,12 @@
 package com.example.odyssey.util;
 
 import cn.hutool.json.JSONUtil;
+import com.example.odyssey.bean.dto.BscScanTransactionLogDTO;
 import com.example.odyssey.bean.dto.TransferFromDTO;
+import com.example.odyssey.bean.dto.TransferLogDTO;
 import com.example.odyssey.common.FunctionTypeClassEnum;
-import com.example.odyssey.model.entity.BscScanTransaction;
+import com.example.odyssey.model.entity.BscScanAccountTransaction;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.web3j.abi.FunctionReturnDecoder;
 import org.web3j.abi.TypeReference;
@@ -15,18 +18,59 @@ import java.util.*;
 
 public class InputDataDecoderUtil {
 
-    public static void BscScanTransaction(BscScanTransaction bscScanTransaction) {
+    public static String BscScanLogTransaction(BscScanTransactionLogDTO bscScanTransactionLogDTO) {
 
-        if (!StringUtils.hasLength(bscScanTransaction.getFunctionName())) {
+        List<String> topics = bscScanTransactionLogDTO.getTopics();
+        if (CollectionUtils.isEmpty(topics) || topics.size() != 4) {
+            return "";
+        }
+        List<TransferLogDTO> transferLogList = new ArrayList<>();
+
+        int fromLength = topics.get(1).length();
+        String from = "0x" + topics.get(1).substring(fromLength - 40, fromLength);
+
+        System.out.println(from);
+
+        TransferLogDTO fromTransferLogDTO = new TransferLogDTO();
+        fromTransferLogDTO.setName("from");
+        fromTransferLogDTO.setData(from);
+
+        int toLength = topics.get(2).length();
+        String to = "0x" + topics.get(2).substring(toLength - 40, toLength);
+
+        System.out.println(to);
+
+        TransferLogDTO toTransferLogDTO = new TransferLogDTO();
+        toTransferLogDTO.setName("to");
+        toTransferLogDTO.setData(to);
+
+
+        Integer tokenId = Integer.parseInt(topics.get(3).substring(2), 16);
+
+        TransferLogDTO tokenIdTransferLogDTO = new TransferLogDTO();
+        tokenIdTransferLogDTO.setName("tokenId");
+        tokenIdTransferLogDTO.setData(tokenId.toString());
+
+        transferLogList.add(fromTransferLogDTO);
+        transferLogList.add(toTransferLogDTO);
+        transferLogList.add(tokenIdTransferLogDTO);
+
+        return JSONUtil.toJsonStr(transferLogList);
+
+    }
+
+    public static void BscScanAccountTransaction(BscScanAccountTransaction bscScanAccountTransaction) {
+
+        if (!StringUtils.hasLength(bscScanAccountTransaction.getFunctionName())) {
             return;
         }
 
         try {
             // 去除方法签名
-            String input = bscScanTransaction.getInput().substring(bscScanTransaction.getMethodId().length());
+            String input = bscScanAccountTransaction.getInput().substring(bscScanAccountTransaction.getMethodId().length());
 
             // 解析方法 获取 参数类型
-            String functionName = bscScanTransaction.getFunctionName();
+            String functionName = bscScanAccountTransaction.getFunctionName();
 
             String[] attributeList = functionName.substring(functionName.indexOf("(") + 1, functionName.indexOf(")")).split(", ");
 
@@ -54,7 +98,7 @@ public class InputDataDecoderUtil {
 
             }
 
-            Function function = new Function(bscScanTransaction.getFunctionName(), new ArrayList<>(), outputParameters);
+            Function function = new Function(bscScanAccountTransaction.getFunctionName(), new ArrayList<>(), outputParameters);
 
             List<Type> list = FunctionReturnDecoder.decode(input, function.getOutputParameters());
 
@@ -64,8 +108,8 @@ public class InputDataDecoderUtil {
                 transferFromDTO.setData(list.get(i).getValue().toString());
             }
 
-            bscScanTransaction.setDecodedInput(JSONUtil.toJsonStr(transferFromList));
-        }catch (Exception e){
+            bscScanAccountTransaction.setDecodedInput(JSONUtil.toJsonStr(transferFromList));
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -97,14 +141,28 @@ public class InputDataDecoderUtil {
 //        }
 
 
-        BscScanTransaction bscScanTransaction = new BscScanTransaction();
-        bscScanTransaction.setMethodId("0x40c10f19");
-        bscScanTransaction.setInput("0x40c10f190000000000000000000000004f914ee31cb44d04c3ce8fccd6573d9af36c87800000000000000000000000000000000000000000000000000000000000000001");
-        bscScanTransaction.setFunctionName("mint(address _owner, uint256 _amount)");
-
-        BscScanTransaction(bscScanTransaction);
+//        BscScanAccountTransaction bscScanAccountTransaction = new BscScanAccountTransaction();
+//        bscScanAccountTransaction.setMethodId("0x40c10f19");
+//        bscScanAccountTransaction.setInput("0x40c10f190000000000000000000000004f914ee31cb44d04c3ce8fccd6573d9af36c87800000000000000000000000000000000000000000000000000000000000000001");
+//        bscScanAccountTransaction.setFunctionName("mint(address _owner, uint256 _amount)");
+//
+//        BscScanAccountTransaction(bscScanAccountTransaction);
 //
 //        String address = Keys.getAddress("0xa22cb465");
 //        System.out.println(address);
+
+//        BscScanTransactionLogDTO bscScanTransactionLogDTO = new BscScanTransactionLogDTO();
+//        bscScanTransactionLogDTO.setTopics(Arrays.asList(
+//                "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+//                "0x0000000000000000000000000000000000000000000000000000000000000000",
+//                "0x000000000000000000000000ff19c7cd7e5a1255ae5a8c850d93edf43303d347",
+//                "0x0000000000000000000000000000000000000000000000000000000000006fbb"
+//        ));
+//
+//        String s = BscScanLogTransaction(bscScanTransactionLogDTO);
+//        System.out.println(s);
+
+        Long aLong = Long.valueOf("83495f",16);
+        System.out.println(aLong);
     }
 }

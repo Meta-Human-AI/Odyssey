@@ -15,7 +15,7 @@ import javax.annotation.Resource;
 
 @RestController
 @RequestMapping("/v1/admin/ods/config")
-public class OdsConfigController {
+public class AdminOdsConfigController {
 
     @Resource
     private OdsConfigService odsConfigService;

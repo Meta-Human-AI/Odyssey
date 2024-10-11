@@ -16,7 +16,7 @@ import javax.annotation.Resource;
 
 @RestController
 @RequestMapping("/v1/admin/recommend")
-public class RecommendController {
+public class AdminRecommendController {
 
     @Resource
     private RecommendService recommendService;
