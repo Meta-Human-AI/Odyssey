@@ -216,9 +216,13 @@ public class BscScanTransactionScheduled {
                 InputDataDecoderUtil.BscScanAccountTransaction(bscScanAccountTransaction);
 
                 bscScanAccountTransactionList.add(bscScanAccountTransaction);
+
+                if (bscScanAccountTransactionList.size() >= 1000) {
+                    bscScanAccountTransactionMapper.insertBatchSomeColumn(bscScanAccountTransactionList);
+                    bscScanAccountTransactionList.clear();
+                }
             }
 
-            bscScanAccountTransactionMapper.insertBatchSomeColumn(bscScanAccountTransactionList);
         }
     }
 
