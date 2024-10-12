@@ -1,25 +1,25 @@
 package com.example.odyssey.common;
 
 import lombok.Getter;
+import org.web3j.abi.TypeReference;
 import org.web3j.abi.datatypes.Address;
 import org.web3j.abi.datatypes.Bool;
+import org.web3j.abi.datatypes.DynamicArray;
 import org.web3j.abi.datatypes.generated.Uint256;
 
 @Getter
 public enum FunctionTypeClassEnum {
 
-    Address("address", Address.class),
+    Address("address",  new TypeReference<DynamicArray<Address>>(){}),
 
-    Bool("bool", Bool.class),
-
-    Uint256("uint256", Uint256.class);
+    Uint256("uint256", new TypeReference<DynamicArray<Uint256>>(){});
 
     private String code;
 
-    private Class type;
+    private TypeReference type;
 
 
-    FunctionTypeClassEnum(String code, Class type) {
+    FunctionTypeClassEnum(String code, TypeReference type) {
         this.code = code;
         this.type = type;
     }

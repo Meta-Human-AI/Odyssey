@@ -44,6 +44,5 @@ public class BscScanAccountTransactionDTO {
 
     private String confirmations;
 
-    @JsonProperty("txreceipt_status")
-    private String receiptStatus;
+    private String txreceipt_status;
 }

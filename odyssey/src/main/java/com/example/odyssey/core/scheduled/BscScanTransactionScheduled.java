@@ -19,6 +19,7 @@ import com.example.odyssey.model.mapper.BscScanTransactionLogMapper;
 import com.example.odyssey.model.mapper.SystemConfigMapper;
 import com.example.odyssey.util.InputDataDecoderUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,6 +31,8 @@ import org.springframework.util.CollectionUtils;
 import javax.annotation.Resource;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -49,6 +52,7 @@ public class BscScanTransactionScheduled {
     private String url;
 
     //    @Scheduled(cron = "0 0/30 * * * ?")
+    @SneakyThrows
     public void transactionAccountRecord() {
 
         log.info("transactionAccountRecord 开始执行");
@@ -61,19 +65,18 @@ public class BscScanTransactionScheduled {
             return;
         }
 
-        try {
-            // 获取合约或nft地址交易记录
-            List<BscScanAccountTransactionResponseDTO> bscScanAccountTransactionResponseDTOList = getBscScanAccountTransactionResponseList(systemConfig);
-            saveBscScanAccountTransaction(bscScanAccountTransactionResponseDTOList);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        List<BscScanAccountTransactionResponseDTO> bscScanAccountTransactionResponseDTOList = getBscScanAccountTransactionResponseList(systemConfig);
+
+        //todo 考虑网络因素，和数据量因素，暂时不统一存储，每次请求一次就存储一次
+        //todo 可能新项目启动 不会有那么多数据，先留者这个方法
+        //saveBscScanAccountTransaction(bscScanAccountTransactionResponseDTOList);
 
         log.info("transactionAccountRecord 结束执行");
 
     }
 
     //    @Scheduled(cron = "0 0/60 * * * ?")
+    @SneakyThrows
     public void transactionLogRecord() {
 
         log.info("transactionLogRecord 开始执行");
@@ -86,14 +89,11 @@ public class BscScanTransactionScheduled {
             return;
         }
 
-        try {
-            // 获取合约的交易日志
-            List<BscScanTransactionLogResponseDTO> bscScanTransactionLogResponseList = getBscScanTransactionLogResponseList(systemConfig);
-            saveBscScanTransactionLog(bscScanTransactionLogResponseList);
-        } catch (Exception e) {
-            e.printStackTrace();
-
-        }
+        // 获取合约的交易日志
+        List<BscScanTransactionLogResponseDTO> bscScanTransactionLogResponseList = getBscScanTransactionLogResponseList(systemConfig);
+        //todo 因为每次只返回1000条数据，需要多次请求，会导致请求超时，所以暂时不统一存储，目前每请求一次就存储一次
+        //todo 可能新项目启动 不会有那么多数据，先留者这个方法
+//        saveBscScanTransactionLog(bscScanTransactionLogResponseList);
 
         log.info("transactionLogRecord 结束执行");
     }
@@ -103,7 +103,8 @@ public class BscScanTransactionScheduled {
      *
      * @return
      */
-    private List<BscScanAccountTransactionResponseDTO> getBscScanAccountTransactionResponseList(SystemConfig systemConfig) throws InterruptedException {
+    @SneakyThrows
+    public List<BscScanAccountTransactionResponseDTO> getBscScanAccountTransactionResponseList(SystemConfig systemConfig) {
 
         List<BscScanAccountTransactionResponseDTO> bscScanAccountTransactionResponseList = new ArrayList<>();
 
@@ -128,8 +129,8 @@ public class BscScanTransactionScheduled {
         return bscScanAccountTransactionResponseList;
     }
 
-
-    private void getBscScanAccountTransactionResponse(Address address, SystemConfig systemConfig, List<BscScanAccountTransactionResponseDTO> bscScanAccountTransactionResponseList) throws InterruptedException {
+    @SneakyThrows
+    public void getBscScanAccountTransactionResponse(Address address, SystemConfig systemConfig, List<BscScanAccountTransactionResponseDTO> bscScanAccountTransactionResponseList) {
 
         Long blockNumber = 0L;
 
@@ -159,12 +160,21 @@ public class BscScanTransactionScheduled {
 
             BscScanAccountTransactionResponseDTO bscScanAccountTransactionResponseDTO = JSONUtil.toBean(response, BscScanAccountTransactionResponseDTO.class);
 
+            if (bscScanAccountTransactionResponseDTO.getStatus().equals("0")) {
+                log.error("BscScanTransactionLogResponseDTO error:{}", bscScanAccountTransactionResponseDTO.getMessage());
+                break;
+            }
+
             if (CollectionUtils.isEmpty(bscScanAccountTransactionResponseDTO.getResult())) {
                 break;
             }
 
             log.info("result:{}", bscScanAccountTransactionResponseDTO.getResult().size());
-            bscScanAccountTransactionResponseList.add(bscScanAccountTransactionResponseDTO);
+            saveBscScanAccountTransaction(Collections.singletonList(bscScanAccountTransactionResponseDTO));
+
+//            bscScanAccountTransactionResponseList.add(bscScanAccountTransactionResponseDTO);
+
+
 
             BscScanAccountTransactionDTO bscScanAccountTransactionDTO = bscScanAccountTransactionResponseDTO.getResult().get(bscScanAccountTransactionResponseDTO.getResult().size() - 1);
 
@@ -186,7 +196,8 @@ public class BscScanTransactionScheduled {
      *
      * @param bscScanAccountTransactionResponseList
      */
-    private void saveBscScanAccountTransaction(List<BscScanAccountTransactionResponseDTO> bscScanAccountTransactionResponseList) {
+    @SneakyThrows
+    public void saveBscScanAccountTransaction(List<BscScanAccountTransactionResponseDTO> bscScanAccountTransactionResponseList) {
 
         if (CollectionUtils.isEmpty(bscScanAccountTransactionResponseList)) {
             return;
@@ -196,17 +207,24 @@ public class BscScanTransactionScheduled {
 
             List<BscScanAccountTransaction> bscScanAccountTransactionList = new ArrayList<>();
 
-            List<BscScanAccountTransactionDTO> BscScanAccountTransactionDTOList = bscScanAccountTransactionResponseDTO.getResult();
-            if (CollectionUtils.isEmpty(BscScanAccountTransactionDTOList)) {
+            List<BscScanAccountTransactionDTO> bscScanAccountTransactionDTOList = bscScanAccountTransactionResponseDTO.getResult();
+            if (CollectionUtils.isEmpty(bscScanAccountTransactionDTOList)) {
                 continue;
             }
-            for (BscScanAccountTransactionDTO bscScanAccountTransactionDTO : BscScanAccountTransactionDTOList) {
+            //批量查询已经存在的交易记录
+            List<String> hashList = bscScanAccountTransactionDTOList.stream().map(BscScanAccountTransactionDTO::getHash).collect(Collectors.toList());
 
-                QueryWrapper<BscScanAccountTransaction> transactionQueryWrapper = new QueryWrapper<>();
-                transactionQueryWrapper.eq("`hash`", bscScanAccountTransactionDTO.getHash());
+            QueryWrapper<BscScanAccountTransaction> transactionQueryWrapper = new QueryWrapper<>();
+            transactionQueryWrapper.in("`hash`", hashList);
 
-                Long count = bscScanAccountTransactionMapper.selectCount(transactionQueryWrapper);
-                if (count > 0) {
+            Map<String, BscScanAccountTransaction> existHashCollect = bscScanAccountTransactionMapper.selectList(transactionQueryWrapper)
+                    .stream()
+                    .collect(Collectors.toMap(BscScanAccountTransaction::getHash, Function.identity()));
+
+            for (BscScanAccountTransactionDTO bscScanAccountTransactionDTO : bscScanAccountTransactionDTOList) {
+
+                BscScanAccountTransaction transaction = existHashCollect.get(bscScanAccountTransactionDTO.getHash());
+                if (Objects.nonNull(transaction)) {
                     continue;
                 }
 
@@ -214,14 +232,20 @@ public class BscScanTransactionScheduled {
                 BeanUtils.copyProperties(bscScanAccountTransactionDTO, bscScanAccountTransaction);
                 bscScanAccountTransaction.setBlockNumber(Long.valueOf(bscScanAccountTransactionDTO.getBlockNumber()));
                 InputDataDecoderUtil.BscScanAccountTransaction(bscScanAccountTransaction);
-
+                bscScanAccountTransaction.setReceiptStatus(bscScanAccountTransactionDTO.getTxreceipt_status());
                 bscScanAccountTransactionList.add(bscScanAccountTransaction);
 
                 if (bscScanAccountTransactionList.size() >= 1000) {
+                    log.info("bscScanAccountTransactionList size:{}", bscScanAccountTransactionList.size());
                     bscScanAccountTransactionMapper.insertBatchSomeColumn(bscScanAccountTransactionList);
                     bscScanAccountTransactionList.clear();
                 }
             }
+
+            if (CollectionUtils.isEmpty(bscScanAccountTransactionList)) {
+                continue;
+            }
+            bscScanAccountTransactionMapper.insertBatchSomeColumn(bscScanAccountTransactionList);
 
         }
     }
@@ -233,7 +257,8 @@ public class BscScanTransactionScheduled {
      * @return
      * @throws InterruptedException
      */
-    private List<BscScanTransactionLogResponseDTO> getBscScanTransactionLogResponseList(SystemConfig systemConfig) throws InterruptedException {
+    @SneakyThrows
+    public List<BscScanTransactionLogResponseDTO> getBscScanTransactionLogResponseList(SystemConfig systemConfig) {
 
         List<BscScanTransactionLogResponseDTO> bscScanTransactionLogResponseList = new ArrayList<>();
 
@@ -261,7 +286,8 @@ public class BscScanTransactionScheduled {
         return bscScanTransactionLogResponseList;
     }
 
-    private void getBscScanTransactionLogResponse(SystemConfig systemConfig, Address address, List<BscScanTransactionLogResponseDTO> bscScanTransactionLogResponseList) throws InterruptedException {
+    @SneakyThrows
+    public void getBscScanTransactionLogResponse(SystemConfig systemConfig, Address address, List<BscScanTransactionLogResponseDTO> bscScanTransactionLogResponseList) {
 
         Long fromBlock = 0L;
 
@@ -283,6 +309,7 @@ public class BscScanTransactionScheduled {
             paramMap.put("address", address.getAddress());
             paramMap.put("apikey", systemConfig.getValue());
             paramMap.put("fromBlock", fromBlock);
+            paramMap.put("toBlock", "latest");
             paramMap.put("module", "logs");
             paramMap.put("action", "getLogs");
             paramMap.put("topic0", "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef");
@@ -291,11 +318,22 @@ public class BscScanTransactionScheduled {
 
             BscScanTransactionLogResponseDTO bscScanTransactionLogResponseDTO = JSONUtil.toBean(response, BscScanTransactionLogResponseDTO.class);
 
+            if (bscScanTransactionLogResponseDTO.getStatus().equals("0")) {
+                log.error("BscScanTransactionLogResponseDTO error:{}", bscScanTransactionLogResponseDTO.getMessage());
+                break;
+            }
+
             if (CollectionUtils.isEmpty(bscScanTransactionLogResponseDTO.getResult())) {
                 break;
             }
 
-            bscScanTransactionLogResponseList.add(bscScanTransactionLogResponseDTO);
+            log.info("result:{}", bscScanTransactionLogResponseDTO.getResult().size());
+
+            saveBscScanTransactionLog(Collections.singletonList(bscScanTransactionLogResponseDTO));
+
+//            bscScanTransactionLogResponseList.add(bscScanTransactionLogResponseDTO);
+
+
 
             BscScanTransactionLogDTO bscScanTransactionLogDTO = bscScanTransactionLogResponseDTO.getResult().get(bscScanTransactionLogResponseDTO.getResult().size() - 1);
 
@@ -318,7 +356,8 @@ public class BscScanTransactionScheduled {
      *
      * @param bscScanTransactionLogResponseList
      */
-    private void saveBscScanTransactionLog(List<BscScanTransactionLogResponseDTO> bscScanTransactionLogResponseList) {
+    @SneakyThrows
+    public void saveBscScanTransactionLog(List<BscScanTransactionLogResponseDTO> bscScanTransactionLogResponseList) {
 
         if (CollectionUtils.isEmpty(bscScanTransactionLogResponseList)) {
             return;
@@ -331,14 +370,23 @@ public class BscScanTransactionScheduled {
                 continue;
             }
 
+            List<BscScanTransactionLog> bscScanTransactionLogList = new ArrayList<>();
+
+            List<String> transactionHashList = bscScanTransactionLogResult.stream().map(BscScanTransactionLogDTO::getTransactionHash).collect(Collectors.toList());
+
+
+            QueryWrapper<BscScanTransactionLog> queryWrapper = new QueryWrapper<>();
+            queryWrapper.in("transaction_hash", transactionHashList);
+
+            Map<String, BscScanTransactionLog> existTransactionHashCollect = bscScanTransactionLogMapper.selectList(queryWrapper)
+                    .stream()
+                    .collect(Collectors.toMap(x -> x.getTransactionHash() + ":" + x.getLogIndex(), Function.identity()));
+
             for (BscScanTransactionLogDTO bscScanTransactionLogDTO : bscScanTransactionLogResult) {
 
 
-                QueryWrapper<BscScanTransactionLog> queryWrapper = new QueryWrapper<>();
-                queryWrapper.eq("transaction_hash", bscScanTransactionLogDTO.getTransactionHash());
-
-                Long count = bscScanTransactionLogMapper.selectCount(queryWrapper);
-                if (count > 0) {
+                BscScanTransactionLog transactionLog = existTransactionHashCollect.get(bscScanTransactionLogDTO.getTransactionHash() + ":" + bscScanTransactionLogDTO.getLogIndex());
+                if (Objects.nonNull(transactionLog)) {
                     continue;
                 }
 
@@ -347,10 +395,17 @@ public class BscScanTransactionScheduled {
                 bscScanTransactionLog.setDecodedTopics(InputDataDecoderUtil.BscScanLogTransaction(bscScanTransactionLogDTO));
                 bscScanTransactionLog.setTopics(JSONUtil.toJsonStr(bscScanTransactionLogDTO.getTopics()));
                 bscScanTransactionLog.setDecodedBlockNumber(Long.valueOf(bscScanTransactionLogDTO.getBlockNumber().substring(2), 16));
-                bscScanTransactionLogMapper.insert(bscScanTransactionLog);
 
+                bscScanTransactionLogList.add(bscScanTransactionLog);
+
+                bscScanTransactionLogMapper.insertBatchSomeColumn(bscScanTransactionLogList);
+                bscScanTransactionLogList.clear();
             }
 
+            if (CollectionUtils.isEmpty(bscScanTransactionLogList)) {
+                continue;
+            }
+            bscScanTransactionLogMapper.insertBatchSomeColumn(bscScanTransactionLogList);
         }
 
     }
