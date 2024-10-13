@@ -8,12 +8,11 @@ import com.example.odyssey.bean.dto.BscScanAccountTransactionDTO;
 import com.example.odyssey.bean.dto.BscScanAccountTransactionResponseDTO;
 import com.example.odyssey.bean.dto.BscScanTransactionLogDTO;
 import com.example.odyssey.bean.dto.BscScanTransactionLogResponseDTO;
-import com.example.odyssey.common.AddressTypeEnum;
-import com.example.odyssey.model.entity.Address;
+import com.example.odyssey.model.entity.ContractAddress;
 import com.example.odyssey.model.entity.BscScanAccountTransaction;
 import com.example.odyssey.model.entity.BscScanTransactionLog;
 import com.example.odyssey.model.entity.SystemConfig;
-import com.example.odyssey.model.mapper.AddressMapper;
+import com.example.odyssey.model.mapper.ContractAddressMapper;
 import com.example.odyssey.model.mapper.BscScanAccountTransactionMapper;
 import com.example.odyssey.model.mapper.BscScanTransactionLogMapper;
 import com.example.odyssey.model.mapper.SystemConfigMapper;
@@ -23,7 +22,6 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -43,7 +41,7 @@ public class BscScanTransactionScheduled {
     @Resource
     private SystemConfigMapper systemConfigMapper;
     @Resource
-    private AddressMapper addressMapper;
+    private ContractAddressMapper contractAddressMapper;
     @Resource
     private BscScanAccountTransactionMapper bscScanAccountTransactionMapper;
     @Resource
@@ -112,15 +110,15 @@ public class BscScanTransactionScheduled {
 
         while (true) {
 
-            List<Address> addressList = addressMapper.selectPage(Page.of(PAGE, 500), new QueryWrapper<>()).getRecords();
+            List<ContractAddress> contractAddressList = contractAddressMapper.selectPage(Page.of(PAGE, 500), new QueryWrapper<>()).getRecords();
 
-            if (CollectionUtils.isEmpty(addressList)) {
+            if (CollectionUtils.isEmpty(contractAddressList)) {
                 break;
             }
 
-            for (Address address : addressList) {
+            for (ContractAddress contractAddress : contractAddressList) {
 
-                getBscScanAccountTransactionResponse(address, systemConfig, bscScanAccountTransactionResponseList);
+                getBscScanAccountTransactionResponse(contractAddress, systemConfig, bscScanAccountTransactionResponseList);
 
             }
             PAGE++;
@@ -130,12 +128,12 @@ public class BscScanTransactionScheduled {
     }
 
     @SneakyThrows
-    public void getBscScanAccountTransactionResponse(Address address, SystemConfig systemConfig, List<BscScanAccountTransactionResponseDTO> bscScanAccountTransactionResponseList) {
+    public void getBscScanAccountTransactionResponse(ContractAddress contractAddress, SystemConfig systemConfig, List<BscScanAccountTransactionResponseDTO> bscScanAccountTransactionResponseList) {
 
         Long blockNumber = 0L;
 
         QueryWrapper<BscScanAccountTransaction> transactionQueryWrapper = new QueryWrapper<>();
-        transactionQueryWrapper.eq("`to`", address.getAddress());
+        transactionQueryWrapper.eq("`to`", contractAddress.getAddress());
         transactionQueryWrapper.orderByDesc("block_number");
         transactionQueryWrapper.last("limit 1");
         BscScanAccountTransaction bscScanAccountTransaction = bscScanAccountTransactionMapper.selectOne(transactionQueryWrapper);
@@ -149,7 +147,7 @@ public class BscScanTransactionScheduled {
             log.info("BscScanAccountTransaction startblock:{}", blockNumber);
 
             Map<String, Object> paramMap = new HashMap<>();
-            paramMap.put("address", address.getAddress());
+            paramMap.put("address", contractAddress.getAddress());
             paramMap.put("apikey", systemConfig.getValue());
             paramMap.put("startblock", blockNumber);
             paramMap.put("module", "account");
@@ -266,18 +264,17 @@ public class BscScanTransactionScheduled {
 
         while (true) {
 
-            QueryWrapper<Address> queryWrapper = new QueryWrapper<>();
-            queryWrapper.eq("type", AddressTypeEnum.CONTRACT.getCode());
+            QueryWrapper<ContractAddress> queryWrapper = new QueryWrapper<>();
 
-            List<Address> addressList = addressMapper.selectPage(Page.of(PAGE, 500), queryWrapper).getRecords();
+            List<ContractAddress> contractAddressList = contractAddressMapper.selectPage(Page.of(PAGE, 500), queryWrapper).getRecords();
 
-            if (CollectionUtils.isEmpty(addressList)) {
+            if (CollectionUtils.isEmpty(contractAddressList)) {
                 break;
             }
 
-            for (Address address : addressList) {
+            for (ContractAddress contractAddress : contractAddressList) {
 
-                getBscScanTransactionLogResponse(systemConfig, address, bscScanTransactionLogResponseList);
+                getBscScanTransactionLogResponse(systemConfig, contractAddress, bscScanTransactionLogResponseList);
             }
 
             PAGE++;
@@ -287,12 +284,12 @@ public class BscScanTransactionScheduled {
     }
 
     @SneakyThrows
-    public void getBscScanTransactionLogResponse(SystemConfig systemConfig, Address address, List<BscScanTransactionLogResponseDTO> bscScanTransactionLogResponseList) {
+    public void getBscScanTransactionLogResponse(SystemConfig systemConfig, ContractAddress contractAddress, List<BscScanTransactionLogResponseDTO> bscScanTransactionLogResponseList) {
 
         Long fromBlock = 0L;
 
         QueryWrapper<BscScanTransactionLog> transactionLogQueryWrapper = new QueryWrapper<>();
-        transactionLogQueryWrapper.eq("`address`", address.getAddress());
+        transactionLogQueryWrapper.eq("`address`", contractAddress.getAddress());
         transactionLogQueryWrapper.orderByDesc("decoded_block_number");
         transactionLogQueryWrapper.last("limit 1");
         BscScanTransactionLog bscScanTransactionLog = bscScanTransactionLogMapper.selectOne(transactionLogQueryWrapper);
@@ -306,7 +303,7 @@ public class BscScanTransactionScheduled {
             log.info("BscScanTransactionLog fromBlock:{}", fromBlock);
 
             Map<String, Object> paramMap = new HashMap<>();
-            paramMap.put("address", address.getAddress());
+            paramMap.put("address", contractAddress.getAddress());
             paramMap.put("apikey", systemConfig.getValue());
             paramMap.put("fromBlock", fromBlock);
             paramMap.put("toBlock", "latest");
@@ -392,9 +389,9 @@ public class BscScanTransactionScheduled {
 
                 BscScanTransactionLog bscScanTransactionLog = new BscScanTransactionLog();
                 BeanUtils.copyProperties(bscScanTransactionLogDTO, bscScanTransactionLog);
-                bscScanTransactionLog.setDecodedTopics(InputDataDecoderUtil.BscScanLogTransaction(bscScanTransactionLogDTO));
                 bscScanTransactionLog.setTopics(JSONUtil.toJsonStr(bscScanTransactionLogDTO.getTopics()));
-                bscScanTransactionLog.setDecodedBlockNumber(Long.valueOf(bscScanTransactionLogDTO.getBlockNumber().substring(2), 16));
+                bscScanTransactionLog.setDecodedBlockNumber(Long.parseLong(bscScanTransactionLogDTO.getBlockNumber().substring(2), 16));
+                InputDataDecoderUtil.BscScanLogTransaction(bscScanTransactionLog,bscScanTransactionLogDTO.getTopics());
 
                 bscScanTransactionLogList.add(bscScanTransactionLog);
 

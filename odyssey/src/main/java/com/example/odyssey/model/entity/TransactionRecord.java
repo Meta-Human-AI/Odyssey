@@ -17,14 +17,38 @@ public class TransactionRecord {
 
     @TableId(type = IdType.INPUT)
     private Integer id;
-
+    /**
+     * 地址
+     */
     private String walletAddress;
-
+    /**
+     * 时间
+     */
     private String time;
-
+    /**
+     * 动作
+     */
     private String action;
-
+    /**
+     * 等级
+     */
     private String type;
+    /**
+     * nft
+     */
+    private Long tokenId;
+    /**
+     * 区块高度
+     */
+    private Long blockNumber;
+    /**
+     * 交易
+     */
+    private String transactionHash;
+    /**
+     * 日志
+     */
+    private String logIndex;
 
-    private Integer number;
+
 }

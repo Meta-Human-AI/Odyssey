@@ -10,6 +10,7 @@ import org.web3j.abi.datatypes.generated.Uint256;
 @Getter
 public enum FunctionTypeClassEnum {
 
+    //todo 还有很多 慢慢加
     Address("address",  new TypeReference<DynamicArray<Address>>(){}),
 
     Uint256("uint256", new TypeReference<DynamicArray<Uint256>>(){});

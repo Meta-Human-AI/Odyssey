@@ -28,8 +28,6 @@ public class BscScanTransactionLog {
 
     private String topics;
 
-    private String decodedTopics;
-
     private String logIndex;
 
     private String timeStamp;
@@ -37,4 +35,14 @@ public class BscScanTransactionLog {
     private String gasPrice;
 
     private String gasUsed;
+
+    private String topic;
+
+    @TableField("`from`")
+    private String from;
+
+    @TableField("`to`")
+    private String to;
+
+    private Long tokenId;
 }

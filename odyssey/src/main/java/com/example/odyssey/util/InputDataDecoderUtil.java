@@ -6,6 +6,7 @@ import com.example.odyssey.bean.dto.TransferFromDTO;
 import com.example.odyssey.bean.dto.TransferLogDTO;
 import com.example.odyssey.common.FunctionTypeClassEnum;
 import com.example.odyssey.model.entity.BscScanAccountTransaction;
+import com.example.odyssey.model.entity.BscScanTransactionLog;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -20,41 +21,28 @@ import java.util.*;
 @Slf4j
 public class InputDataDecoderUtil {
 
-    public static String BscScanLogTransaction(BscScanTransactionLogDTO bscScanTransactionLogDTO) {
+    public static void BscScanLogTransaction(BscScanTransactionLog bscScanTransactionLog,List<String> topics ) {
 
-        List<String> topics = bscScanTransactionLogDTO.getTopics();
         if (CollectionUtils.isEmpty(topics) || topics.size() != 4) {
-            return "";
+            return ;
         }
-        List<TransferLogDTO> transferLogList = new ArrayList<>();
+
+        bscScanTransactionLog.setTopic(topics.get(0));
 
         int fromLength = topics.get(1).length();
         String from = "0x" + topics.get(1).substring(fromLength - 40, fromLength);
 
-        TransferLogDTO fromTransferLogDTO = new TransferLogDTO();
-        fromTransferLogDTO.setName("from");
-        fromTransferLogDTO.setData(from);
+        bscScanTransactionLog.setFrom(from);
 
         int toLength = topics.get(2).length();
         String to = "0x" + topics.get(2).substring(toLength - 40, toLength);
 
-
-        TransferLogDTO toTransferLogDTO = new TransferLogDTO();
-        toTransferLogDTO.setName("to");
-        toTransferLogDTO.setData(to);
+        bscScanTransactionLog.setTo(to);
 
 
-        Integer tokenId = Integer.parseInt(topics.get(3).substring(2), 16);
+        Long tokenId = Long.parseLong(topics.get(3).substring(2), 16);
 
-        TransferLogDTO tokenIdTransferLogDTO = new TransferLogDTO();
-        tokenIdTransferLogDTO.setName("tokenId");
-        tokenIdTransferLogDTO.setData(tokenId.toString());
-
-        transferLogList.add(fromTransferLogDTO);
-        transferLogList.add(toTransferLogDTO);
-        transferLogList.add(tokenIdTransferLogDTO);
-
-        return JSONUtil.toJsonStr(transferLogList);
+        bscScanTransactionLog.setTokenId(tokenId);
 
     }
 
@@ -68,6 +56,9 @@ public class InputDataDecoderUtil {
             // 去除方法签名
             String input = bscScanAccountTransaction.getInput().substring(bscScanAccountTransaction.getMethodId().length());
 
+            if (!StringUtils.hasLength(input)){
+                return;
+            }
             // 解析方法 获取 参数类型
             String functionName = bscScanAccountTransaction.getFunctionName();
 
@@ -94,6 +85,10 @@ public class InputDataDecoderUtil {
                     outputParameters.add(functionTypeClassEnum.getType());
 
                 } else {
+
+                    if (!StringUtils.hasLength(parameter[0])){
+                        return;
+                    }
 
                     if (parameter[0].equals("bytes")) {
                         outputParameters.add(TypeReference.create(AbiTypes.getType("bytes32")));

@@ -2,7 +2,7 @@ package com.example.odyssey.util;
 
 public class TokenTypeUtil {
 
-    public String getType(Long tokenId) {
+    public  static String getType(Long tokenId) {
 
         if (tokenId <= 300) {
             return "OL";
