@@ -25,16 +25,14 @@ public class RewardDistributionRecord {
      * 钱包地址
      */
     private String walletAddress;
-
     /**
-     * 等级类型
+     * 关联地址 因为谁 而获得返利
      */
-    private String type;
-
+    private String relationAddress;
     /**
-     * 拥有等级数量
+     * nft
      */
-    private Integer number;
+    private Long tokenId;
 
     /**
      * 奖励数量
@@ -54,10 +52,10 @@ public class RewardDistributionRecord {
     /**
      * 创建时间
      */
-    private Long createTime;
+    private String createTime;
 
     /**
      * 奖励时间
      */
-    private Long rewardTime;
+    private String rewardTime;
 }

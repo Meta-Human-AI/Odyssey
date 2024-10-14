@@ -1,5 +1,6 @@
 package com.example.odyssey.api.admin;
 
+import com.example.odyssey.core.scheduled.BscScanTransactionScheduled;
 import com.example.odyssey.core.service.BscScanService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,15 +13,15 @@ import javax.annotation.Resource;
 public class AdminBscScanController {
 
     @Resource
-    private BscScanService bscScanService;
+    private BscScanTransactionScheduled bscScanTransactionScheduled;
 
     @GetMapping("/transaction/account/record")
     public void transactionAccountRecord() {
-        bscScanService.transactionAccountRecord();
+        bscScanTransactionScheduled.transactionAccountRecord();
     }
 
     @GetMapping("/transaction/log/record")
     public void transactionLogRecord() {
-        bscScanService.transactionLogRecord();
+        bscScanTransactionScheduled.transactionLogRecord();
     }
 }

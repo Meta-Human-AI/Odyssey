@@ -12,31 +12,21 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@TableName("rebate_config")
-public class RebateConfig {
+@TableName("nft_message")
+public class NftMessage {
+
 
     @TableId(type = IdType.INPUT)
     private Integer id;
 
-    /**
-     * 一级推荐人返利比例 10% 直接关联的
-     */
-    private String firstRebateRate;
+    private Long tokenId;
+
+    private String url;
+
+    private String type;
 
     /**
-     * 二级推荐人返利比例
+     * 持有人
      */
-    private String secondRebateRate;
-
-    /**
-     * 推荐类型
-     */
-    private String recommendType;
-
-    /**
-     * 返利类型
-     */
-    private String rebateType;
-
-
+    private String address;
 }

@@ -29,6 +29,8 @@ public class TransactionRecord {
      * 动作
      */
     private String action;
+
+    private String actionName;
     /**
      * 等级
      */

@@ -6,8 +6,4 @@ import com.example.odyssey.bean.cmd.RewardDistributionCmd;
 
 public interface RewardDistributionService {
 
-    /**
-     * 奖励发放
-     */
-    SingleResponse rewardDistribution(RewardDistributionCmd rewardDistributionCmd);
 }

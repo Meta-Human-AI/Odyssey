@@ -35,7 +35,6 @@ public class RebateConfigServiceImpl implements RebateConfigService {
 
         rebateConfig.setFirstRebateRate(rebateConfigUpdateCmd.getFirstRebateRate());
         rebateConfig.setSecondRebateRate(rebateConfigUpdateCmd.getSecondRebateRate());
-        rebateConfig.setThirdRebateRate(rebateConfigUpdateCmd.getThirdRebateRate());
 
         rebateConfigMapper.updateById(rebateConfig);
 
@@ -57,7 +56,6 @@ public class RebateConfigServiceImpl implements RebateConfigService {
             rebateConfigDTO.setRebateType(rebateConfig.getRebateType());
             rebateConfigDTO.setFirstRebateRate(rebateConfig.getFirstRebateRate());
             rebateConfigDTO.setSecondRebateRate(rebateConfig.getSecondRebateRate());
-            rebateConfigDTO.setThirdRebateRate(rebateConfig.getThirdRebateRate());
 
             rebateConfigDTOList.add(rebateConfigDTO);
         }

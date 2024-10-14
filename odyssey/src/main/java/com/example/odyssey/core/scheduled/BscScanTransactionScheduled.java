@@ -22,6 +22,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -49,7 +50,7 @@ public class BscScanTransactionScheduled {
     @Value("${bsc.scan.transaction.url}")
     private String url;
 
-    //    @Scheduled(cron = "0 0/30 * * * ?")
+    @Scheduled(cron = "0 0/10 * * * ?")
     @SneakyThrows
     public void transactionAccountRecord() {
 
@@ -73,7 +74,7 @@ public class BscScanTransactionScheduled {
 
     }
 
-    //    @Scheduled(cron = "0 0/60 * * * ?")
+    @Scheduled(cron = "0 0/15 * * * ?")
     @SneakyThrows
     public void transactionLogRecord() {
 

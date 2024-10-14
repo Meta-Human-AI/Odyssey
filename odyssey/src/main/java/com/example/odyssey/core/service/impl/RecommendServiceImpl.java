@@ -146,13 +146,20 @@ public class RecommendServiceImpl implements RecommendService {
             newRecommend.setWalletAddress(recommendCreateCmd.getWalletAddress());
             newRecommend.setRecommendWalletAddress(recommendWalletAddress.toString());
             newRecommend.setRecommendCode(recommendCreateCmd.getRecommendCore());
-            newRecommend.setSecondRecommendWalletAddress(recommend.getRecommendWalletAddress());
-            newRecommend.setFirstRecommendWalletAddress(recommend.getSecondRecommendWalletAddress());
+
 
             if (Objects.isNull(recommend.getFirstRecommendWalletAddress()) || Objects.isNull(recommend.getSecondRecommendWalletAddress())) {
+                if (Objects.isNull(recommend.getFirstRecommendWalletAddress())) {
+                    newRecommend.setFirstRecommendWalletAddress(recommend.getWalletAddress());
+                } else {
+                    newRecommend.setFirstRecommendWalletAddress(recommend.getFirstRecommendWalletAddress());
+                    newRecommend.setSecondRecommendWalletAddress(recommend.getWalletAddress());
+                }
                 newRecommend.setRecommendType(RecommendEnum.LEADER.getCode());
             } else {
                 newRecommend.setRecommendType(RecommendEnum.NORMAL.getCode());
+                newRecommend.setSecondRecommendWalletAddress(recommend.getWalletAddress());
+                newRecommend.setFirstRecommendWalletAddress(recommend.getFirstRecommendWalletAddress());
             }
             newRecommend.setCreateTime(System.currentTimeMillis());
             recommendMapper.insert(newRecommend);

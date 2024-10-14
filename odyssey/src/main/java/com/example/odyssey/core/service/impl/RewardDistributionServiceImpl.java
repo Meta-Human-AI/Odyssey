@@ -30,40 +30,6 @@ public class RewardDistributionServiceImpl implements RewardDistributionService 
     @Resource
     RewardDistributionRecordMapper rewardDistributionRecordMapper;
 
-    @Override
-    public SingleResponse rewardDistribution(RewardDistributionCmd rewardDistributionCmd) {
-        //计算每个等级 每人获取的ods数量 再根据返佣比例计算返佣数量
-        rewardDistributionCmd.getList().stream().collect(Collectors.groupingBy(RewardDistributionDTO::getType))
-                .forEach((type, list) -> {
-                    QueryWrapper<OdsConfig> odsConfigQueryWrapper = new QueryWrapper();
-                    odsConfigQueryWrapper.eq("type", type);
-
-                    OdsConfig odsConfig = odsConfigMapper.selectOne(odsConfigQueryWrapper);
-                    if (odsConfig == null) {
-                        return;
-                    }
-                    //计算每个等级总数
-                    Integer typeSum = list.stream().map(RewardDistributionDTO::getNumber).mapToInt(Integer::intValue).sum();
-                    //计算每个等级获取的ods数量
-                    BigDecimal number = BigDecimal.valueOf(odsConfig.getNumber()).divide(BigDecimal.valueOf(typeSum), 2, BigDecimal.ROUND_DOWN);
-
-                    for (RewardDistributionDTO rewardDistributionDTO : list) {
-
-                        RewardDistributionRecord rewardDistributionRecord = new RewardDistributionRecord();
-                        rewardDistributionRecord.setWalletAddress(rewardDistributionDTO.getWalletAddress());
-                        rewardDistributionRecord.setRewardNumber(number.multiply(BigDecimal.valueOf(rewardDistributionDTO.getNumber())).toString());
-                        rewardDistributionRecord.setType(type);
-                        rewardDistributionRecord.setNumber(rewardDistributionDTO.getNumber());
-                        rewardDistributionRecord.setRewardType(RebateEnum.ODS.getCode());
-                        rewardDistributionRecord.setCreateTime(System.currentTimeMillis());
-                        rewardDistributionRecord.setRewardStatus(RewardDistributionStatusEnum.UNISSUED.getCode());
-                        rewardDistributionRecordMapper.insert(rewardDistributionRecord);
-                    }
-
-                });
-
-        return null;
-    }
 
 
 }

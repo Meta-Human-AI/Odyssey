@@ -12,12 +12,4 @@ import javax.annotation.Resource;
 @Transactional
 public class TransactionRecordServiceImpl implements TransactionRecordService {
 
-    @Resource
-    TransactionRecordScheduled transactionRecordScheduled;
-
-    @Override
-    @Async
-    public void transactionRecord() {
-        transactionRecordScheduled.transactionRecord();
-    }
 }

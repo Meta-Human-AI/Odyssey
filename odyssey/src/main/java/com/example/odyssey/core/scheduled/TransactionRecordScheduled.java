@@ -2,7 +2,12 @@ package com.example.odyssey.core.scheduled;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.example.odyssey.bean.cmd.NftMessageQryCmd;
+import com.example.odyssey.bean.cmd.NftMessageTransferCmd;
+import com.example.odyssey.bean.dto.NftMessageDTO;
+import com.example.odyssey.common.ActionTypeEnum;
 import com.example.odyssey.common.FunctionTopicEnum;
+import com.example.odyssey.core.service.NftMessageService;
 import com.example.odyssey.model.entity.BscScanAccountTransaction;
 import com.example.odyssey.model.entity.BscScanTransactionLog;
 import com.example.odyssey.model.entity.ContractAddress;
@@ -13,6 +18,7 @@ import com.example.odyssey.model.mapper.TransactionRecordMapper;
 import com.example.odyssey.util.TokenTypeUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -36,7 +42,10 @@ public class TransactionRecordScheduled {
     @Resource
     TransactionRecordMapper transactionRecordMapper;
 
+    @Resource
+    NftMessageService nftMessageService;
 
+    @Scheduled(cron = "0 0/20 * * * ?")
     public void transactionRecord() {
         log.info("transactionRecord 开始执行");
 
@@ -70,6 +79,11 @@ public class TransactionRecordScheduled {
                     continue;
                 }
 
+                NftMessageQryCmd nftMessageQryCmd = new NftMessageQryCmd();
+                nftMessageQryCmd.setTokenId(bscScanTransactionLog.getTokenId());
+                nftMessageQryCmd.setAddress(bscScanTransactionLog.getAddress());
+                NftMessageDTO nftMessage = nftMessageService.getNftMessage(nftMessageQryCmd).getData();
+
                 String timeStamp = bscScanTransactionLog.getTimeStamp();
 
                 Date date = new Date(Long.parseLong(timeStamp.substring(2), 16)* 1000);
@@ -88,9 +102,10 @@ public class TransactionRecordScheduled {
 
                     transferOut = new TransactionRecord();
                     transferOut.setTransactionHash(bscScanTransactionLog.getTransactionHash());
-                    transferOut.setAction("转出");
+                    transferOut.setAction(ActionTypeEnum.TRANSFER_OUT.getCode());
+                    transferOut.setActionName(ActionTypeEnum.TRANSFER_OUT.getName());
                     transferOut.setBlockNumber(bscScanTransactionLog.getDecodedBlockNumber());
-                    transferOut.setType(TokenTypeUtil.getType(bscScanTransactionLog.getTokenId()));
+                    transferOut.setType(nftMessage.getType());
                     transferOut.setTokenId(bscScanTransactionLog.getTokenId());
                     transferOut.setLogIndex(bscScanTransactionLog.getLogIndex());
                     transferOut.setWalletAddress(bscScanTransactionLog.getFrom());
@@ -110,9 +125,10 @@ public class TransactionRecordScheduled {
 
                     transferIn = new TransactionRecord();
                     transferIn.setTransactionHash(bscScanTransactionLog.getTransactionHash());
-                    transferIn.setAction("转入");
+                    transferIn.setAction(ActionTypeEnum.TRANSFER_IN.getCode());
+                    transferIn.setActionName(ActionTypeEnum.TRANSFER_IN.getName());
                     transferIn.setBlockNumber(bscScanTransactionLog.getDecodedBlockNumber());
-                    transferIn.setType(TokenTypeUtil.getType(bscScanTransactionLog.getTokenId()));
+                    transferIn.setType(nftMessage.getType());
                     transferIn.setTokenId(bscScanTransactionLog.getTokenId());
                     transferIn.setLogIndex(bscScanTransactionLog.getLogIndex());
                     transferIn.setWalletAddress(bscScanTransactionLog.getTo());

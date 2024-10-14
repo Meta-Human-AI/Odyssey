@@ -22,7 +22,7 @@ public class RecommendController {
 
     @Resource
     private RecommendService recommendService;
-    @PostMapping("/")
+    @PostMapping("/add")
     SingleResponse recommend(@RequestBody RecommendCreateCmd recommendCreateCmd){
 
         Assert.notNull(recommendCreateCmd.getWalletAddress(), "钱包地址不能为空");

@@ -1,5 +1,6 @@
 package com.example.odyssey.api.admin;
 
+import com.example.odyssey.core.scheduled.TransactionRecordScheduled;
 import com.example.odyssey.core.service.TransactionRecordService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,10 +13,10 @@ import javax.annotation.Resource;
 public class AdminTransactionRecordController {
 
     @Resource
-    TransactionRecordService transactionRecordService;
+    TransactionRecordScheduled transactionRecordScheduled;
 
     @GetMapping("/start")
     public void transactionAccountRecord() {
-        transactionRecordService.transactionRecord();
+        transactionRecordScheduled.transactionRecord();
     }
 }
