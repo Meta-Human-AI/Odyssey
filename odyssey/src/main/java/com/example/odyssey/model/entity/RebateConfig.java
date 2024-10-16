@@ -19,6 +19,11 @@ public class RebateConfig {
     private Integer id;
 
     /**
+     * 领导地址
+     */
+    private String address;
+
+    /**
      * 一级推荐人返利比例 10% 直接关联的
      */
     private String firstRebateRate;

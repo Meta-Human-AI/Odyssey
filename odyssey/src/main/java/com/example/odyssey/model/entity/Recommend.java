@@ -52,6 +52,11 @@ public class Recommend{
     private String recommendWalletAddress;
 
     /**
+     * 领导钱包地址
+     */
+    private String leaderWalletAddress;
+
+    /**
      * 创建时间
      */
     private Long createTime;

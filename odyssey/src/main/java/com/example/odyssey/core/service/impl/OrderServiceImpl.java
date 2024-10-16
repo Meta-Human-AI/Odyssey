@@ -1,14 +1,20 @@
 package com.example.odyssey.core.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.example.odyssey.bean.SingleResponse;
 import com.example.odyssey.bean.cmd.*;
 import com.example.odyssey.common.OrderAppealStatusEnum;
 import com.example.odyssey.common.OrderStatusEnum;
+import com.example.odyssey.core.service.EmailService;
 import com.example.odyssey.core.service.OrderService;
+import com.example.odyssey.model.entity.NftMessage;
 import com.example.odyssey.model.entity.Order;
 import com.example.odyssey.model.entity.OrderAppeal;
+import com.example.odyssey.model.entity.SystemConfig;
+import com.example.odyssey.model.mapper.NftMessageMapper;
 import com.example.odyssey.model.mapper.OrderAppealMapper;
 import com.example.odyssey.model.mapper.OrderMapper;
+import com.example.odyssey.model.mapper.SystemConfigMapper;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
@@ -17,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -29,7 +36,12 @@ public class OrderServiceImpl implements OrderService {
     RedissonClient redissonClient;
     @Resource
     OrderAppealMapper orderAppealMapper;
-
+    @Resource
+    EmailService emailService;
+    @Resource
+    NftMessageMapper nftMessageMapper;
+    @Resource
+    SystemConfigMapper systemConfigMapper;
     @Override
     public SingleResponse createOrder(OrderCreateCmd orderCreateCmd) {
 
@@ -38,6 +50,17 @@ public class OrderServiceImpl implements OrderService {
         try {
             if (redLock.tryLock(5 * 1000, TimeUnit.MILLISECONDS)) {
 
+                QueryWrapper<NftMessage> queryWrapper = new QueryWrapper<>();
+                queryWrapper.eq("token_id", orderCreateCmd.getTokenId());
+                NftMessage nftMessage = nftMessageMapper.selectOne(queryWrapper);
+                if (nftMessage == null) {
+                    return SingleResponse.buildFailure("nft不存在");
+                }
+
+                if (nftMessage.getBlockadeTime() > System.currentTimeMillis()) {
+                    return SingleResponse.buildFailure("nft已被封锁");
+                }
+
                 //todo 是否需要做订单重复判断
 
                 Order order = new Order();
@@ -45,6 +68,29 @@ public class OrderServiceImpl implements OrderService {
                 order.setStatus(OrderStatusEnum.AUTHENTICATION.getCode());
                 order.setCreateTime(LocalDateTime.now().toString());
                 orderMapper.insert(order);
+
+                //todo 发送邮件
+                EmailCreateCmd emailCreateCmd = new EmailCreateCmd();
+                emailCreateCmd.setEmail(orderCreateCmd.getEmail());
+                emailCreateCmd.setOrderId(order.getId());
+
+                emailService.sendEmail(emailCreateCmd);
+
+                Integer blockadeDay = 90;
+
+                QueryWrapper<SystemConfig> systemQueryWrapper = new QueryWrapper<>();
+
+                systemQueryWrapper.eq("key", "nft_blockade_day");
+
+                SystemConfig systemConfig = systemConfigMapper.selectOne(systemQueryWrapper);
+
+                if (Objects.nonNull(systemConfig)) {
+                    blockadeDay = Integer.valueOf(systemConfig.getValue());
+                }
+
+                nftMessage.setBlockadeTime(System.currentTimeMillis() + blockadeDay * 24 * 60 * 60 * 1000);
+
+                nftMessageMapper.updateById(nftMessage);
 
                 return SingleResponse.buildSuccess();
 
@@ -78,6 +124,15 @@ public class OrderServiceImpl implements OrderService {
                     order.setCancelTime(LocalDateTime.now().toString());
                     order.setStatus(OrderStatusEnum.CANCEL.getCode());
                     orderMapper.updateById(order);
+
+                    QueryWrapper<NftMessage> queryWrapper = new QueryWrapper<>();
+                    queryWrapper.eq("token_id", order.getTokenId());
+                    NftMessage nftMessage = nftMessageMapper.selectOne(queryWrapper);
+
+                    if (Objects.nonNull(nftMessage)) {
+                        nftMessage.setBlockadeTime(0L);
+                        nftMessageMapper.updateById(nftMessage);
+                    }
 
                     return SingleResponse.buildSuccess();
                 }

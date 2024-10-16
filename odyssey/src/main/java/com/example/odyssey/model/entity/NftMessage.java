@@ -26,7 +26,20 @@ public class NftMessage {
     private String type;
 
     /**
-     * 持有人
+     * 封锁时间
      */
-    private String address;
+    private Long blockadeTime;
+
+    /**
+     * 昨天持有人
+     */
+    private String oldAddress;
+    /**
+     * 当前持有人
+     */
+    private String newAddress;
+    /**
+     * 购买人
+     */
+    private String buyAddress;
 }

@@ -146,7 +146,7 @@ public class RecommendServiceImpl implements RecommendService {
             newRecommend.setWalletAddress(recommendCreateCmd.getWalletAddress());
             newRecommend.setRecommendWalletAddress(recommendWalletAddress.toString());
             newRecommend.setRecommendCode(recommendCreateCmd.getRecommendCore());
-
+            newRecommend.setLeaderWalletAddress(recommend.getLeaderWalletAddress());
 
             if (Objects.isNull(recommend.getFirstRecommendWalletAddress()) || Objects.isNull(recommend.getSecondRecommendWalletAddress())) {
                 if (Objects.isNull(recommend.getFirstRecommendWalletAddress())) {
@@ -182,6 +182,7 @@ public class RecommendServiceImpl implements RecommendService {
         }
 
         Recommend recommend = new Recommend();
+        recommend.setLeaderWalletAddress(recommendLeaderCreateCmd.getWalletAddress());
         recommend.setWalletAddress(recommendLeaderCreateCmd.getWalletAddress());
         recommend.setCreateTime(System.currentTimeMillis());
 

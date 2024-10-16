@@ -49,6 +49,7 @@ public class NftMessageServiceImpl implements NftMessageService {
             nftMessage = new NftMessage();
             nftMessage.setTokenId(nftMessageQryCmd.getTokenId());
             nftMessage.setType(nftIdToLevel);
+            nftMessage.setBlockadeTime(0L);
             nftMessageMapper.insert(nftMessage);
 
             nftMessageDTO.setTokenId(nftMessageQryCmd.getTokenId());
@@ -72,7 +73,17 @@ public class NftMessageServiceImpl implements NftMessageService {
             return SingleResponse.buildFailure("nft不存在");
         }
 
-        nftMessage.setAddress(nftMessageTransferCmd.getTo());
+        if (Objects.nonNull(nftMessageTransferCmd.getOldAddress())){
+            nftMessage.setOldAddress(nftMessageTransferCmd.getOldAddress());
+        }
+
+        if (Objects.nonNull(nftMessageTransferCmd.getNewAddress())){
+            nftMessage.setNewAddress(nftMessageTransferCmd.getNewAddress());
+        }
+
+        if (Objects.nonNull(nftMessageTransferCmd.getBuyAddress())){
+            nftMessage.setBuyAddress(nftMessageTransferCmd.getBuyAddress());
+        }
         nftMessageMapper.updateById(nftMessage);
         return SingleResponse.buildSuccess();
     }

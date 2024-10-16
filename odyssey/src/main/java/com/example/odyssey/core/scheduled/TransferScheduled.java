@@ -32,9 +32,9 @@ public class TransferScheduled {
     NftMessageService nftMessageService;
 
     /**
-     * 每天凌晨1点执行
+     * 每天凌晨1点执行 读取日志的时候 记录 旧的地址 这里就不在定时统计了 可能会出现问题 先留者 看看测试结果
      */
-    @Scheduled(cron = "0 0 1 * * ?")
+    @Scheduled(cron = "0 59 23 * * ?")
     public void transfer() {
         log.info("transfer 开始执行");
 
@@ -64,7 +64,7 @@ public class TransferScheduled {
 
             NftMessageTransferCmd nftMessageTransferCmd = new NftMessageTransferCmd();
             nftMessageTransferCmd.setTokenId(tokenId);
-            nftMessageTransferCmd.setTo(address);
+            nftMessageTransferCmd.setOldAddress(address);
             nftMessageService.transferNftMessage(nftMessageTransferCmd);
 
         });

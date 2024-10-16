@@ -37,6 +37,9 @@ import java.util.Objects;
 public class TransactionRecordScheduled {
 
     @Resource
+    BscScanAccountTransactionMapper bscScanAccountTransactionMapper;
+
+    @Resource
     BscScanTransactionLogMapper bscScanTransactionLogMapper;
 
     @Resource
@@ -45,7 +48,7 @@ public class TransactionRecordScheduled {
     @Resource
     NftMessageService nftMessageService;
 
-    @Scheduled(cron = "0 0/20 * * * ?")
+    @Scheduled(cron = "0 0/15 * * * ?")
     public void transactionRecord() {
         log.info("transactionRecord 开始执行");
 
@@ -90,7 +93,50 @@ public class TransactionRecordScheduled {
                 SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                 String time = simpleDateFormat.format(date);
 
-                List<TransactionRecord> transactionRecordList = new ArrayList<>();
+                NftMessageTransferCmd nftMessageTransferCmd = new NftMessageTransferCmd();
+
+                //是否是购买
+                if (bscScanTransactionLog.getFrom().equals("0x0000000000000000000000000000000000000000")){
+                    QueryWrapper<TransactionRecord> buyQueryWrapper = new QueryWrapper<>();
+                    buyQueryWrapper.eq("wallet_address", bscScanTransactionLog.getTo());
+                    buyQueryWrapper.eq("transaction_hash", bscScanTransactionLog.getTransactionHash());
+                    buyQueryWrapper.eq("log_index", bscScanTransactionLog.getLogIndex());
+
+                    TransactionRecord buy = transactionRecordMapper.selectOne(buyQueryWrapper);
+                    if (Objects.nonNull(buy)){
+                        continue;
+                    }
+
+                    QueryWrapper<BscScanAccountTransaction> bscScanAccountTransactionQueryWrapper = new QueryWrapper<>();
+                    bscScanAccountTransactionQueryWrapper.eq("hash",bscScanTransactionLog.getTransactionHash());
+
+                    BscScanAccountTransaction bscScanAccountTransaction = bscScanAccountTransactionMapper.selectOne(bscScanAccountTransactionQueryWrapper);
+                    if (Objects.isNull(bscScanAccountTransaction)){
+                        continue;
+                    }
+
+                    if (bscScanAccountTransaction.getMethodId().equals("0x5a0ce362")){
+
+                        buy = new TransactionRecord();
+                        buy.setTransactionHash(bscScanTransactionLog.getTransactionHash());
+                        buy.setAction(ActionTypeEnum.BUY.getCode());
+                        buy.setActionName(ActionTypeEnum.BUY.getName());
+                        buy.setBlockNumber(bscScanTransactionLog.getDecodedBlockNumber());
+                        buy.setType(nftMessage.getType());
+                        buy.setTokenId(bscScanTransactionLog.getTokenId());
+                        buy.setLogIndex(bscScanTransactionLog.getLogIndex());
+                        buy.setWalletAddress(bscScanTransactionLog.getFrom());
+                        buy.setTime(time);
+
+                        transactionRecordMapper.insert(buy);
+
+                        nftMessageTransferCmd.setBuyAddress(bscScanTransactionLog.getTo());
+
+                    }
+
+                }
+
+
                 //转出
                 QueryWrapper<TransactionRecord> transferOutQueryWrapper = new QueryWrapper<>();
                 transferOutQueryWrapper.eq("wallet_address", bscScanTransactionLog.getFrom());
@@ -111,7 +157,7 @@ public class TransactionRecordScheduled {
                     transferOut.setWalletAddress(bscScanTransactionLog.getFrom());
                     transferOut.setTime(time);
 
-                    transactionRecordList.add(transferOut);
+                    transactionRecordMapper.insert(transferOut);
                 }
 
                 //转入
@@ -134,16 +180,19 @@ public class TransactionRecordScheduled {
                     transferIn.setWalletAddress(bscScanTransactionLog.getTo());
                     transferIn.setTime(time);
 
-                    transactionRecordList.add(transferIn);
+                    transactionRecordMapper.insert(transferIn);
+
                 }
 
+                nftMessageTransferCmd.setTokenId(bscScanTransactionLog.getTokenId());
+                nftMessageTransferCmd.setNewAddress(bscScanTransactionLog.getTo());
 
-
-                if (CollectionUtils.isEmpty(transactionRecordList)){
-                    continue;
+                if (Objects.nonNull(nftMessageTransferCmd.getBuyAddress())){
+                    nftMessageTransferCmd.setOldAddress(nftMessageTransferCmd.getBuyAddress());
+                }else {
+                    nftMessageTransferCmd.setOldAddress(bscScanTransactionLog.getFrom());
                 }
-
-                transactionRecordMapper.insertBatchSomeColumn(transactionRecordList);
+                nftMessageService.transferNftMessage(nftMessageTransferCmd);
 
             }
             PAGE++;

@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@TableName("order")
+@TableName("`order`")
 public class Order {
 
     @TableId(type = IdType.INPUT)
