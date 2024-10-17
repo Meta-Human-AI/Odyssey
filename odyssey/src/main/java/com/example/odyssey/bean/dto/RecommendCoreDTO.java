@@ -8,4 +8,8 @@ public class RecommendCoreDTO {
      * 推荐码
      */
     private String recommendCore;
+    /**
+     * 推荐链接
+     */
+    private String recommendUrl;
 }

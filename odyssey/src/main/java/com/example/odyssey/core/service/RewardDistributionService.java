@@ -1,9 +1,19 @@
 package com.example.odyssey.core.service;
 
+import com.example.odyssey.bean.MultiResponse;
 import com.example.odyssey.bean.SingleResponse;
 import com.example.odyssey.bean.cmd.RewardDistributionCmd;
+import com.example.odyssey.bean.cmd.RewardDistributionIssuedCmd;
+import com.example.odyssey.bean.cmd.RewardDistributionListQryCmd;
+import com.example.odyssey.bean.dto.RewardDistributionDTO;
 
 
 public interface RewardDistributionService {
+
+
+    MultiResponse<RewardDistributionDTO> listRewardDistribution(RewardDistributionListQryCmd rewardDistributionListQryCmd);
+
+
+    SingleResponse issuedRewardDistribution(RewardDistributionIssuedCmd rewardDistributionIssuedCmd);
 
 }

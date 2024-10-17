@@ -19,6 +19,12 @@ public class AdminOdsConfigController {
 
     @Resource
     private OdsConfigService odsConfigService;
+
+    /**
+     * 更新ods 每天发放数量
+     * @param odsConfigUpdateCmd
+     * @return
+     */
     @PostMapping("/update")
     public SingleResponse update(@RequestBody OdsConfigUpdateCmd odsConfigUpdateCmd){
 
@@ -27,6 +33,10 @@ public class AdminOdsConfigController {
         return odsConfigService.update(odsConfigUpdateCmd);
     }
 
+    /**
+     * ods 等级配置
+     * @return
+     */
     @PostMapping("/list")
     public MultiResponse<OdsConfigDTO> list(){
 

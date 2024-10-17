@@ -20,11 +20,4 @@ public class AdminEmailController {
         return emailService.sendEmail(emailCreateCmd);
     }
 
-    @GetMapping("/verify")
-    public SingleResponse verify(@RequestParam String code) {
-
-        EmailVerifyCmd emailVerifyCmd = new EmailVerifyCmd();
-        emailVerifyCmd.setVerificationCode(code);
-        return emailService.verifyEmail(emailVerifyCmd);
-    }
 }

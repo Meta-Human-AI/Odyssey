@@ -24,7 +24,7 @@ public class EmailUtil {
      */
     public String getEmailContent(String verificationCode,String url) {
         String content = "Dear User, please click on the following link to verify your email: " +
-                url + "/odyssey/v1/admin/email/verify?code=" + verificationCode;
+                url + "/odyssey/v1/email/verify?code=" + verificationCode;
         return content;
     }
     /**

@@ -22,6 +22,11 @@ public class RecommendController {
 
     @Resource
     private RecommendService recommendService;
+    /**
+     * 加入
+     * @param recommendCreateCmd
+     * @return
+     */
     @PostMapping("/add")
     SingleResponse recommend(@RequestBody RecommendCreateCmd recommendCreateCmd){
 
@@ -30,7 +35,11 @@ public class RecommendController {
 
         return recommendService.recommend(recommendCreateCmd);
     }
-
+    /**
+     * 获取推荐码
+     * @param recommendCoreCreateCmd
+     * @return
+     */
     @PostMapping("/code")
     SingleResponse<RecommendCoreDTO> getRecommendCore(@RequestBody RecommendCoreCreateCmd recommendCoreCreateCmd){
 
@@ -38,7 +47,11 @@ public class RecommendController {
 
         return recommendService.getRecommendCore(recommendCoreCreateCmd);
     }
-
+    /**
+     * 获取推荐列表
+     * @param recommendListQryCmd
+     * @return
+     */
     @PostMapping("/list")
     public MultiResponse<RecommendListDTO> getRecommendList(@RequestBody RecommendListQryCmd recommendListQryCmd) {
 

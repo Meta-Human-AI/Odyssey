@@ -16,4 +16,6 @@ public interface OrderService {
     SingleResponse cancelAppealOrder(OrderAppealCancelCmd orderAppealCancelCmd);
 
     SingleResponse handleAppealOrder(OrderAppealHandleCmd orderAppealHandleCmd);
+
+    SingleResponse finishOrder(OrderFinishCmd orderFinishCmd);
 }

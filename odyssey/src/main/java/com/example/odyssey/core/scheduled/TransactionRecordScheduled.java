@@ -125,7 +125,7 @@ public class TransactionRecordScheduled {
                         buy.setType(nftMessage.getType());
                         buy.setTokenId(bscScanTransactionLog.getTokenId());
                         buy.setLogIndex(bscScanTransactionLog.getLogIndex());
-                        buy.setWalletAddress(bscScanTransactionLog.getFrom());
+                        buy.setWalletAddress(bscScanTransactionLog.getTo());
                         buy.setTime(time);
 
                         transactionRecordMapper.insert(buy);

@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
@@ -66,7 +67,7 @@ public class OrderServiceImpl implements OrderService {
                 Order order = new Order();
                 BeanUtils.copyProperties(orderCreateCmd, order);
                 order.setStatus(OrderStatusEnum.AUTHENTICATION.getCode());
-                order.setCreateTime(LocalDateTime.now().toString());
+                order.setCreateTime(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
                 orderMapper.insert(order);
 
                 //todo 发送邮件
@@ -121,7 +122,7 @@ public class OrderServiceImpl implements OrderService {
                 if (order.getStatus().equals(OrderStatusEnum.AUTHENTICATION.getCode()) || order.getStatus().equals(OrderStatusEnum.EXAMINE.getCode())) {
 
                     order.setReason(orderCancelCmd.getReason());
-                    order.setCancelTime(LocalDateTime.now().toString());
+                    order.setCancelTime(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
                     order.setStatus(OrderStatusEnum.CANCEL.getCode());
                     orderMapper.updateById(order);
 
@@ -166,7 +167,7 @@ public class OrderServiceImpl implements OrderService {
                     return SingleResponse.buildFailure("订单状态不正确");
                 }
 
-                order.setExamineTime(LocalDateTime.now().toString());
+                order.setExamineTime(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
                 order.setStatus(orderExamineCmd.getStatus());
                 order.setReason(orderExamineCmd.getReason());
 
@@ -190,7 +191,7 @@ public class OrderServiceImpl implements OrderService {
         OrderAppeal orderAppeal = new OrderAppeal();
         BeanUtils.copyProperties(orderAppealCreateCmd, orderAppeal);
         orderAppeal.setStatus(OrderAppealStatusEnum.PENDING.getCode());
-        orderAppeal.setCreateTime(LocalDateTime.now().toString());
+        orderAppeal.setCreateTime(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         orderAppealMapper.insert(orderAppeal);
 
         return SingleResponse.buildSuccess();
@@ -230,9 +231,29 @@ public class OrderServiceImpl implements OrderService {
 
         orderAppeal.setRemark(orderAppealHandleCmd.getRemark());
         orderAppeal.setStatus(OrderAppealStatusEnum.FINISH.getCode());
-        orderAppeal.setFinishTime(LocalDateTime.now().toString());
+        orderAppeal.setFinishTime(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
 
         orderAppealMapper.updateById(orderAppeal);
+        return SingleResponse.buildSuccess();
+    }
+
+    @Override
+    public SingleResponse finishOrder(OrderFinishCmd orderFinishCmd) {
+
+        Order order = orderMapper.selectById(orderFinishCmd.getOrderId());
+        if (order == null) {
+            return SingleResponse.buildFailure("订单不存在");
+        }
+
+        if (order.getStatus() != OrderStatusEnum.PASS.getCode()) {
+            return SingleResponse.buildFailure("订单状态不正确");
+        }
+
+        order.setFinishTime(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        order.setStatus(OrderStatusEnum.FINISH.getCode());
+
+        orderMapper.updateById(order);
+
         return SingleResponse.buildSuccess();
     }
 }

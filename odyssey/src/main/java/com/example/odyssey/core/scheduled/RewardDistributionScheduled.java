@@ -17,6 +17,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 /**
@@ -76,14 +77,14 @@ public class RewardDistributionScheduled {
 
                 String address = nftMessage.getOldAddress();
 
-                if (!nftMessage.getOldAddress().equals(nftMessage.getBuyAddress())) {
+                if (Objects.nonNull(nftMessage.getBuyAddress()) && !nftMessage.getOldAddress().equals(nftMessage.getBuyAddress())) {
                     address = nftMessage.getBuyAddress();
                 }
 
                 Map<String, String> rebateMap = getRebateMap(address, number, RebateEnum.ODS.getCode());
 
                 //todo 保存返佣记录
-                saveRewardDistributionRecord(rebateMap,nftMessage,RebateEnum.ODS.getCode());
+                saveRewardDistributionRecord(rebateMap, nftMessage, RebateEnum.ODS.getCode());
             }
 
         }
@@ -93,6 +94,7 @@ public class RewardDistributionScheduled {
 
     /**
      * 计算每个人 应该获取多少奖励
+     *
      * @param address
      * @param number
      * @param rebateType
@@ -123,7 +125,7 @@ public class RewardDistributionScheduled {
 
                     rebateMap.put(recommend.getFirstRecommendWalletAddress(), first.toString());
 
-                    if (rebateType.equals(RebateEnum.ODS.getCode())){
+                    if (rebateType.equals(RebateEnum.ODS.getCode())) {
                         rebateMap.put(recommend.getWalletAddress(), number.subtract(first).toString());
                     }
 
@@ -134,19 +136,19 @@ public class RewardDistributionScheduled {
                     BigDecimal second = number.multiply(new BigDecimal(rebateConfig.getSecondRebateRate()));
                     rebateMap.put(recommend.getSecondRecommendWalletAddress(), second.toString());
 
-                    if (rebateType.equals(RebateEnum.ODS.getCode())){
+                    if (rebateType.equals(RebateEnum.ODS.getCode())) {
                         rebateMap.put(recommend.getWalletAddress(), number.subtract(first).subtract(second).toString());
                     }
                 }
             } else {
                 //代表当前用户处在一级 不需要进行·返佣
-                if (rebateType.equals(RebateEnum.ODS.getCode())){
+                if (rebateType.equals(RebateEnum.ODS.getCode())) {
                     rebateMap.put(recommend.getWalletAddress(), number.toString());
                 }
             }
         } else {
             //没有推荐人
-            if (rebateType.equals(RebateEnum.ODS.getCode())){
+            if (rebateType.equals(RebateEnum.ODS.getCode())) {
                 rebateMap.put(recommend.getWalletAddress(), number.toString());
             }
         }
@@ -175,8 +177,8 @@ public class RewardDistributionScheduled {
             rewardDistributionRecord.setWalletAddress(k);
             rewardDistributionRecord.setTokenId(nftMessage.getTokenId());
             rewardDistributionRecord.setRewardNumber(v);
-            rewardDistributionRecord.setRewardType(RebateEnum.ODS.getCode());
-            rewardDistributionRecord.setCreateTime(LocalDateTime.now().toString());
+            rewardDistributionRecord.setRewardType(rebateType);
+            rewardDistributionRecord.setCreateTime(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
             rewardDistributionRecord.setRewardStatus(RewardDistributionStatusEnum.UNISSUED.getCode());
 
             rewardDistributionRecord.setRelationAddress(nftMessage.getOldAddress());
@@ -185,7 +187,7 @@ public class RewardDistributionScheduled {
 
         });
 
-        if (CollectionUtils.isEmpty(rewardDistributionRecordList)){
+        if (CollectionUtils.isEmpty(rewardDistributionRecordList)) {
             return;
         }
 

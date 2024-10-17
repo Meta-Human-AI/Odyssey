@@ -5,18 +5,43 @@ import lombok.Data;
 @Data
 public class RewardDistributionDTO {
 
+    private Integer id;
+
     /**
      * 钱包地址
      */
     private String walletAddress;
+    /**
+     * 关联地址 因为谁 而获得返利
+     */
+    private String relationAddress;
+    /**
+     * nft
+     */
+    private Long tokenId;
 
     /**
-     * 等级类型
+     * 奖励数量
      */
-    private String type;
+    private String rewardNumber;
 
     /**
-     * 拥有等级数量
+     * 奖励类型
      */
-    private Integer number;
+    private String rewardType;
+
+    /**
+     * 奖励状态
+     */
+    private String rewardStatus;
+
+    /**
+     * 创建时间
+     */
+    private String createTime;
+
+    /**
+     * 奖励时间
+     */
+    private String rewardTime;
 }

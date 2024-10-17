@@ -12,4 +12,22 @@ public class NftMessageDTO {
     private String url;
 
     private String type;
+
+    /**
+     * 封锁时间
+     */
+    private Long blockadeTime;
+
+    /**
+     * 昨天持有人
+     */
+    private String oldAddress;
+    /**
+     * 当前持有人
+     */
+    private String newAddress;
+    /**
+     * 购买人
+     */
+    private String buyAddress;
 }

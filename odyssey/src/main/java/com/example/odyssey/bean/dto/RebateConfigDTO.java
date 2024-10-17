@@ -5,6 +5,12 @@ import lombok.Data;
 @Data
 public class RebateConfigDTO {
 
+    private Integer id;
+
+    /**
+     * 领导地址
+     */
+    private String address;
 
     /**
      * 一级推荐人返利比例

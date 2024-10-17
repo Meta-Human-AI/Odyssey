@@ -4,6 +4,8 @@ import lombok.Data;
 
 @Data
 public class RebateConfigUpdateCmd {
+
+    private Integer id;
     /**
      * 一级推荐人返利比例
      */

@@ -14,8 +14,10 @@ import com.example.odyssey.common.RecommendEnum;
 import com.example.odyssey.core.service.RecommendService;
 import com.example.odyssey.model.entity.Recommend;
 import com.example.odyssey.model.entity.RecommendCoreLog;
+import com.example.odyssey.model.entity.SystemConfig;
 import com.example.odyssey.model.mapper.RecommendCoreLogMapper;
 import com.example.odyssey.model.mapper.RecommendMapper;
+import com.example.odyssey.model.mapper.SystemConfigMapper;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
@@ -43,6 +45,9 @@ public class RecommendServiceImpl implements RecommendService {
     RecommendCoreLogMapper recommendCoreLogMapper;
     @Resource
     RecommendMapper recommendMapper;
+
+    @Resource
+    SystemConfigMapper systemConfigMapper;
 
     @Override
     public SingleResponse<RecommendCoreDTO> getRecommendCore(RecommendCoreCreateCmd recommendCoreCreateCmd) {
@@ -98,6 +103,17 @@ public class RecommendServiceImpl implements RecommendService {
                 recommendCoreLog.setExpireTime(System.currentTimeMillis() + 24 * 60 * 60 * 1000);
                 recommendCoreLogMapper.insert(recommendCoreLog);
 
+                QueryWrapper<SystemConfig> systemQueryWrapper = new QueryWrapper<>();
+
+                systemQueryWrapper.eq("key", "ods_url");
+
+                SystemConfig systemConfig = systemConfigMapper.selectOne(systemQueryWrapper);
+
+                if (Objects.isNull(systemConfig)) {
+                    return SingleResponse.buildFailure("URL configuration not found");
+                }
+
+                recommendCoreDTO.setRecommendUrl(systemConfig.getValue() + "/odyssey/v1/add?recommendCore=" + randomAlphabetic);
 
                 recommendCoreDTO.setRecommendCore(randomAlphabetic);
                 return SingleResponse.of(recommendCoreDTO);
@@ -147,6 +163,7 @@ public class RecommendServiceImpl implements RecommendService {
             newRecommend.setRecommendWalletAddress(recommendWalletAddress.toString());
             newRecommend.setRecommendCode(recommendCreateCmd.getRecommendCore());
             newRecommend.setLeaderWalletAddress(recommend.getLeaderWalletAddress());
+
 
             if (Objects.isNull(recommend.getFirstRecommendWalletAddress()) || Objects.isNull(recommend.getSecondRecommendWalletAddress())) {
                 if (Objects.isNull(recommend.getFirstRecommendWalletAddress())) {
