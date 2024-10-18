@@ -18,5 +18,7 @@ public class NftMessageTransferCmd {
      */
     private String buyAddress;
 
+    private String bugTime;
+
     private Long tokenId;
 }

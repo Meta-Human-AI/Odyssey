@@ -73,34 +73,20 @@ public class RecommendServiceImpl implements RecommendService {
 
                 while (true) {
 
-                    randomAlphabetic = RandomStringUtils.randomAlphabetic(7);
+                    randomAlphabetic = RandomStringUtils.random(7, true, true).toUpperCase();
 
-                    try {
+                    QueryWrapper<RecommendCoreLog> queryWrapper = new QueryWrapper<>();
+                    queryWrapper.eq("recommend_core", randomAlphabetic);
 
-                        if (!redisTemplate.hasKey(randomAlphabetic)) {
-
-                            redisTemplate.opsForValue().set(randomAlphabetic, recommendCoreCreateCmd.getWalletAddress(), 1, TimeUnit.DAYS);
-                            redisTemplate.opsForValue().set(recommendCoreCreateCmd.getWalletAddress(), randomAlphabetic, 1, TimeUnit.DAYS);
-
-                            break;
-                        }
-                    } catch (Exception e) {
-                        e.printStackTrace();
-
-                        QueryWrapper<RecommendCoreLog> queryWrapper = new QueryWrapper<>();
-                        queryWrapper.eq("recommend_core", randomAlphabetic);
-                        Long count = recommendCoreLogMapper.selectCount(queryWrapper);
-
-                        if (count == 0) {
-                            break;
-                        }
-
+                    Long count = recommendCoreLogMapper.selectCount(queryWrapper);
+                    if (count == 0) {
+                        break;
                     }
                 }
 
                 recommendCoreLog.setRecommendCore(randomAlphabetic);
                 recommendCoreLog.setCreateTime(System.currentTimeMillis());
-                recommendCoreLog.setExpireTime(System.currentTimeMillis() + 24 * 60 * 60 * 1000);
+//                recommendCoreLog.setExpireTime(System.currentTimeMillis() + 24 * 60 * 60 * 1000);
                 recommendCoreLogMapper.insert(recommendCoreLog);
 
                 QueryWrapper<SystemConfig> systemQueryWrapper = new QueryWrapper<>();
@@ -113,7 +99,7 @@ public class RecommendServiceImpl implements RecommendService {
                     return SingleResponse.buildFailure("URL configuration not found");
                 }
 
-                recommendCoreDTO.setRecommendUrl(systemConfig.getValue() + "/odyssey/v1/add?recommendCore=" + randomAlphabetic);
+                recommendCoreDTO.setRecommendUrl(systemConfig.getValue() + "/odyssey/v1/recommend/add?core=" + randomAlphabetic);
 
                 recommendCoreDTO.setRecommendCore(randomAlphabetic);
                 return SingleResponse.of(recommendCoreDTO);
@@ -136,9 +122,17 @@ public class RecommendServiceImpl implements RecommendService {
 
         try {
             //推荐人
-            Object recommendWalletAddress = redisTemplate.opsForValue().get(recommendCreateCmd.getRecommendCore());
-            if (Objects.isNull(recommendWalletAddress)) {
-                return SingleResponse.buildFailure("推荐码不存在或已过期");
+//            Object recommendWalletAddress = redisTemplate.opsForValue().get(recommendCreateCmd.getRecommendCore());
+//            if (Objects.isNull(recommendWalletAddress)) {
+//                return SingleResponse.buildFailure("推荐码不存在或已过期");
+//            }
+
+            QueryWrapper<RecommendCoreLog> recommendCoreLogQueryWrapper = new QueryWrapper<>();
+            recommendCoreLogQueryWrapper.eq("recommend_core", recommendCreateCmd.getRecommendCore());
+            RecommendCoreLog recommendCoreLog = recommendCoreLogMapper.selectOne(recommendCoreLogQueryWrapper);
+
+            if (Objects.nonNull(recommendCoreLog)){
+                return SingleResponse.buildFailure("推荐码不存在");
             }
 
             QueryWrapper<Recommend> queryWrapper = new QueryWrapper<>();
@@ -151,7 +145,7 @@ public class RecommendServiceImpl implements RecommendService {
 
             //查询推荐人的推荐关系
             QueryWrapper<Recommend> recommendQueryWrapper = new QueryWrapper<>();
-            recommendQueryWrapper.eq("wallet_address", recommendWalletAddress);
+            recommendQueryWrapper.eq("wallet_address", recommendCoreLog.getWalletAddress());
             Recommend recommend = recommendMapper.selectOne(recommendQueryWrapper);
 
             if (Objects.isNull(recommend)) {
@@ -160,7 +154,7 @@ public class RecommendServiceImpl implements RecommendService {
 
             Recommend newRecommend = new Recommend();
             newRecommend.setWalletAddress(recommendCreateCmd.getWalletAddress());
-            newRecommend.setRecommendWalletAddress(recommendWalletAddress.toString());
+            newRecommend.setRecommendWalletAddress( recommendCoreLog.getWalletAddress()    );
             newRecommend.setRecommendCode(recommendCreateCmd.getRecommendCore());
             newRecommend.setLeaderWalletAddress(recommend.getLeaderWalletAddress());
 
@@ -260,5 +254,10 @@ public class RecommendServiceImpl implements RecommendService {
         }
         recommendListDTO.setRecommendList(childRecommendList);
 
+    }
+
+
+    public static void main(String[] args) {
+        System.out.println(RandomStringUtils.random(7, true, true).toUpperCase());
     }
 }

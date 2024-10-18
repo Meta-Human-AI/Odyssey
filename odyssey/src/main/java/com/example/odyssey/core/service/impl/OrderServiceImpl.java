@@ -1,20 +1,18 @@
 package com.example.odyssey.core.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.example.odyssey.bean.MultiResponse;
 import com.example.odyssey.bean.SingleResponse;
 import com.example.odyssey.bean.cmd.*;
+import com.example.odyssey.bean.dto.OrderAppealDTO;
+import com.example.odyssey.bean.dto.OrderDTO;
 import com.example.odyssey.common.OrderAppealStatusEnum;
 import com.example.odyssey.common.OrderStatusEnum;
 import com.example.odyssey.core.service.EmailService;
 import com.example.odyssey.core.service.OrderService;
-import com.example.odyssey.model.entity.NftMessage;
-import com.example.odyssey.model.entity.Order;
-import com.example.odyssey.model.entity.OrderAppeal;
-import com.example.odyssey.model.entity.SystemConfig;
-import com.example.odyssey.model.mapper.NftMessageMapper;
-import com.example.odyssey.model.mapper.OrderAppealMapper;
-import com.example.odyssey.model.mapper.OrderMapper;
-import com.example.odyssey.model.mapper.SystemConfigMapper;
+import com.example.odyssey.model.entity.*;
+import com.example.odyssey.model.mapper.*;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
@@ -24,8 +22,9 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -43,6 +42,9 @@ public class OrderServiceImpl implements OrderService {
     NftMessageMapper nftMessageMapper;
     @Resource
     SystemConfigMapper systemConfigMapper;
+    @Resource
+    HotelMapper hotelMapper;
+
     @Override
     public SingleResponse createOrder(OrderCreateCmd orderCreateCmd) {
 
@@ -60,6 +62,14 @@ public class OrderServiceImpl implements OrderService {
 
                 if (nftMessage.getBlockadeTime() > System.currentTimeMillis()) {
                     return SingleResponse.buildFailure("nft已被封锁");
+                }
+
+                Hotel hotel = hotelMapper.selectById(orderCreateCmd.getHotelId());
+                if (hotel == null) {
+                    return SingleResponse.buildFailure("酒店不存在");
+                }
+                if (!hotel.getState().equals(nftMessage.getState())) {
+                    return SingleResponse.buildFailure("酒店不可选择");
                 }
 
                 //todo 是否需要做订单重复判断
@@ -255,5 +265,114 @@ public class OrderServiceImpl implements OrderService {
         orderMapper.updateById(order);
 
         return SingleResponse.buildSuccess();
+    }
+
+    @Override
+    public MultiResponse<OrderDTO> listOrder(OrderListQryCmd orderListQryCmd) {
+
+        QueryWrapper<Order> queryWrapper = new QueryWrapper<>();
+        if (Objects.nonNull(orderListQryCmd.getStatus())) {
+            queryWrapper.eq("status", orderListQryCmd.getStatus());
+        }
+        if (Objects.nonNull(orderListQryCmd.getAddress())) {
+            queryWrapper.eq("address", orderListQryCmd.getAddress());
+        }
+        if (Objects.nonNull(orderListQryCmd.getTokenId())) {
+            queryWrapper.eq("token_id", orderListQryCmd.getTokenId());
+        }
+        if (Objects.nonNull(orderListQryCmd.getHotel())) {
+            queryWrapper.like("hotel", orderListQryCmd.getHotel());
+        }
+        if (Objects.nonNull(orderListQryCmd.getHotelState())) {
+            queryWrapper.eq("hotel_state", orderListQryCmd.getHotelState());
+        }
+        if (Objects.nonNull(orderListQryCmd.getHotelCity())) {
+            queryWrapper.eq("hotel_city", orderListQryCmd.getHotelCity());
+        }
+        if (Objects.nonNull(orderListQryCmd.getHotelAddress())) {
+            queryWrapper.like("hotel_address", orderListQryCmd.getHotelAddress());
+        }
+        if (Objects.nonNull(orderListQryCmd.getName())) {
+            queryWrapper.like("name", orderListQryCmd.getName());
+        }
+        if (Objects.nonNull(orderListQryCmd.getPhone())) {
+            queryWrapper.like("phone", orderListQryCmd.getPhone());
+        }
+        if (Objects.nonNull(orderListQryCmd.getCreateStartTime()) && Objects.nonNull(orderListQryCmd.getCreateEndTime())) {
+            queryWrapper.between("create_time", orderListQryCmd.getCreateStartTime(), orderListQryCmd.getCreateEndTime());
+        }
+        if (Objects.nonNull(orderListQryCmd.getCancelStartTime()) && Objects.nonNull(orderListQryCmd.getCancelEndTime())) {
+            queryWrapper.between("cancel_time", orderListQryCmd.getCancelStartTime(), orderListQryCmd.getCancelEndTime());
+        }
+        if (Objects.nonNull(orderListQryCmd.getFinishStartTime()) && Objects.nonNull(orderListQryCmd.getFinishEndTime())) {
+            queryWrapper.between("finish_time", orderListQryCmd.getFinishStartTime(), orderListQryCmd.getFinishEndTime());
+        }
+        if (Objects.nonNull(orderListQryCmd.getExamineStartTime()) && Objects.nonNull(orderListQryCmd.getExamineEndTime())) {
+            queryWrapper.between("examine_time", orderListQryCmd.getExamineStartTime(), orderListQryCmd.getExamineEndTime());
+        }
+
+
+        Page<Order> orderPage = orderMapper.selectPage(Page.of(orderListQryCmd.getPageNum(), orderListQryCmd.getPageSize()), queryWrapper);
+
+        if (orderPage.getRecords().isEmpty()) {
+            return MultiResponse.buildSuccess();
+        }
+
+        List<Integer> hotelIds = orderPage.getRecords().stream().map(Order::getHotelId).collect(Collectors.toList());
+
+        Map<Integer, Hotel> hotelMap = hotelMapper.selectBatchIds(hotelIds).stream().collect(Collectors.toMap(Hotel::getId, hotel -> hotel));
+
+
+        List<OrderDTO> orderDTOList = new ArrayList<>();
+
+        for (Order order : orderPage.getRecords()) {
+            OrderDTO orderDTO = new OrderDTO();
+            BeanUtils.copyProperties(order, orderDTO);
+
+            Hotel hotel = hotelMap.get(order.getHotelId());
+            if (Objects.nonNull(hotel)) {
+                orderDTO.setHotelName(hotel.getName());
+                orderDTO.setHotelPhone(hotel.getPhone());
+                orderDTO.setHotelEmail(hotel.getEmail());
+                orderDTO.setHotelState(hotel.getState());
+                orderDTO.setHotelCity(hotel.getCity());
+                orderDTO.setHotelAddress(hotel.getAddress());
+            }
+            orderDTOList.add(orderDTO);
+        }
+
+        return MultiResponse.of(orderDTOList, (int) orderPage.getTotal());
+    }
+
+    @Override
+    public MultiResponse<OrderAppealDTO> listOrderAppeal(OrderAppealListQryCmd orderAppealListQryCmd) {
+
+        QueryWrapper<OrderAppeal> queryWrapper = new QueryWrapper<>();
+        if (Objects.nonNull(orderAppealListQryCmd.getOrderId())) {
+            queryWrapper.eq("order_id", orderAppealListQryCmd.getOrderId());
+        }
+        if (Objects.nonNull(orderAppealListQryCmd.getStatus())) {
+            queryWrapper.eq("status", orderAppealListQryCmd.getStatus());
+        }
+        if (Objects.nonNull(orderAppealListQryCmd.getCreateStartTime()) && Objects.nonNull(orderAppealListQryCmd.getCreateEndTime())) {
+            queryWrapper.between("create_time", orderAppealListQryCmd.getCreateStartTime(), orderAppealListQryCmd.getCreateEndTime());
+        }
+        if (Objects.nonNull(orderAppealListQryCmd.getFinishStartTime()) && Objects.nonNull(orderAppealListQryCmd.getFinishEndTime())) {
+            queryWrapper.between("finish_time", orderAppealListQryCmd.getFinishStartTime(), orderAppealListQryCmd.getFinishEndTime());
+        }
+        queryWrapper.orderByDesc("id");
+        Page<OrderAppeal> orderAppealPage = orderAppealMapper.selectPage(Page.of(orderAppealListQryCmd.getPageNum(), orderAppealListQryCmd.getPageSize()), queryWrapper);
+
+        List<OrderAppealDTO> orderAppealDTOList = new ArrayList<>();
+
+        for (OrderAppeal orderAppeal : orderAppealPage.getRecords()){
+
+            OrderAppealDTO orderAppealDTO = new OrderAppealDTO();
+            BeanUtils.copyProperties(orderAppeal,orderAppealDTO);
+
+            orderAppealDTOList.add(orderAppealDTO);
+        }
+
+        return MultiResponse.of(orderAppealDTOList, (int) orderAppealPage.getTotal());
     }
 }

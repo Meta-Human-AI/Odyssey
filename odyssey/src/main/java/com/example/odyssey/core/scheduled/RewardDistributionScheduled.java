@@ -39,6 +39,10 @@ public class RewardDistributionScheduled {
     RewardDistributionRecordMapper rewardDistributionRecordMapper;
     @Resource
     RecommendMapper recommendMapper;
+    @Resource
+    RegionRecommendMapper regionRecommendMapper;
+    @Resource
+    RegionRecommendLogMapper regionRecommendLogMapper;
 
 
     /**
@@ -193,6 +197,52 @@ public class RewardDistributionScheduled {
 
         rewardDistributionRecordMapper.insertBatchSomeColumn(rewardDistributionRecordList);
 
+
+        for (RewardDistributionRecord rewardDistributionRecord : rewardDistributionRecordList) {
+            saveRegionRecommendLog(rewardDistributionRecord);
+        }
+
+    }
+
+    public void saveRegionRecommendLog(RewardDistributionRecord rewardDistributionRecord) {
+
+        QueryWrapper<Recommend> recommendQueryWrapper = new QueryWrapper();
+        recommendQueryWrapper.eq("wallet_address", rewardDistributionRecord.getWalletAddress());
+        Recommend recommend = recommendMapper.selectOne(recommendQueryWrapper);
+
+        if (Objects.isNull(recommend)) {
+            return;
+        }
+
+        if (!recommend.getWalletAddress().equals(recommend.getLeaderWalletAddress())) {
+            return;
+        }
+
+        QueryWrapper<RegionRecommend> regionRecommendQueryWrapper = new QueryWrapper();
+        regionRecommendQueryWrapper.eq("leader_address", recommend.getWalletAddress());
+
+        RegionRecommend regionRecommend = regionRecommendMapper.selectOne(regionRecommendQueryWrapper);
+        if (Objects.isNull(regionRecommend)) {
+            return;
+        }
+
+        QueryWrapper<RegionRecommendLog> regionRecommendLogQueryWrapper = new QueryWrapper();
+        regionRecommendLogQueryWrapper.eq("reward_distribution_record_id", rewardDistributionRecord.getId());
+
+        RegionRecommendLog regionRecommendLog = regionRecommendLogMapper.selectOne(regionRecommendLogQueryWrapper);
+        if (Objects.nonNull(regionRecommendLog)) {
+            return;
+        }
+
+        regionRecommendLog = new RegionRecommendLog();
+        regionRecommendLog.setRegionAddress(regionRecommend.getRegionAddress());
+        regionRecommendLog.setLeaderAddress(recommend.getWalletAddress());
+        regionRecommendLog.setRewardNumber(new BigDecimal(rewardDistributionRecord.getRewardNumber()).multiply(new BigDecimal(regionRecommend.getRebateRate())).toString());
+        regionRecommendLog.setType(rewardDistributionRecord.getRewardType());
+        regionRecommendLog.setTokenId(rewardDistributionRecord.getTokenId());
+        regionRecommendLog.setRewardDistributionRecordId(rewardDistributionRecord.getId());
+
+        regionRecommendLogMapper.insert(regionRecommendLog);
     }
 
 }

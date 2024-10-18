@@ -1,21 +1,11 @@
-package com.example.odyssey.model.entity;
+package com.example.odyssey.bean.dto;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-@TableName("`order`")
-public class Order {
+public class OrderDTO {
 
-    @TableId(type = IdType.INPUT)
+
     private Integer id;
     /**
      * 钱包地址
@@ -28,7 +18,29 @@ public class Order {
     /**
      * 酒店
      */
-    private Integer hotelId;
+    private String hotelName;
+    /**
+     * 酒店所在州
+     */
+    private String hotelState;
+
+    /**
+     * 酒店所在城市
+     */
+    private String hotelCity;
+
+    /**
+     * 酒店所在街道
+     */
+    private String hotelAddress;
+    /**
+     * 酒店电话
+     */
+    private String hotelPhone;
+    /**
+     * 酒店邮箱
+     */
+    private String hotelEmail;
     /**
      * 入住时间
      */
@@ -77,4 +89,5 @@ public class Order {
      * 取消或审批拒绝原因
      */
     private String reason;
+
 }

@@ -1,7 +1,10 @@
 package com.example.odyssey.core.service;
 
+import com.example.odyssey.bean.MultiResponse;
 import com.example.odyssey.bean.SingleResponse;
 import com.example.odyssey.bean.cmd.*;
+import com.example.odyssey.bean.dto.OrderAppealDTO;
+import com.example.odyssey.bean.dto.OrderDTO;
 
 public interface OrderService {
 
@@ -18,4 +21,8 @@ public interface OrderService {
     SingleResponse handleAppealOrder(OrderAppealHandleCmd orderAppealHandleCmd);
 
     SingleResponse finishOrder(OrderFinishCmd orderFinishCmd);
+
+    MultiResponse<OrderDTO> listOrder(OrderListQryCmd orderListQryCmd);
+
+    MultiResponse<OrderAppealDTO> listOrderAppeal(OrderAppealListQryCmd orderAppealListQryCmd);
 }

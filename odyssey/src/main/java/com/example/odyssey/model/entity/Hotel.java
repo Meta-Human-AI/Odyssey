@@ -12,44 +12,37 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@TableName("nft_message")
-public class NftMessage {
-
+@TableName("`hotel`")
+public class Hotel {
 
     @TableId(type = IdType.INPUT)
     private Integer id;
-
-    private Long tokenId;
-
-    private String url;
     /**
-     * 等级
+     * 名称
      */
-    private String type;
+    private String name;
     /**
      * 州
      */
     private String state;
-
     /**
-     * 封锁时间
+     * 城市
      */
-    private Long blockadeTime;
-
+    private String city;
     /**
-     * 昨天持有人
+     * 地址
      */
-    private String oldAddress;
+    private String address;
     /**
-     * 当前持有人
+     * 电话
      */
-    private String newAddress;
+    private String phone;
     /**
-     * 购买人
+     * 邮箱
      */
-    private String buyAddress;
+    private String email;
     /**
-     * 购买时间
+     * 类型
      */
-    private String buyTime;
+    private String type;
 }

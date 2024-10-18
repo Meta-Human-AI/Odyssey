@@ -1,15 +1,12 @@
-package com.example.odyssey.api.admin;
+package com.example.odyssey.api.user;
 
-import cn.hutool.core.lang.Assert;
 import com.example.odyssey.bean.MultiResponse;
-import com.example.odyssey.bean.SingleResponse;
-import com.example.odyssey.bean.cmd.RewardDistributionIssuedCmd;
 import com.example.odyssey.bean.cmd.RewardDistributionListQryCmd;
 import com.example.odyssey.bean.cmd.RewardDistributionTotalQryCmd;
 import com.example.odyssey.bean.dto.RewardDistributionDTO;
 import com.example.odyssey.bean.dto.RewardDistributionTotalDTO;
-import com.example.odyssey.core.scheduled.RewardDistributionScheduled;
 import com.example.odyssey.core.service.RewardDistributionService;
+import org.springframework.util.Assert;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -17,19 +14,11 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.annotation.Resource;
 
 @RestController
-@RequestMapping("/v1/admin/reward/distribution")
-public class AdminRewardDistributionController {
+@RequestMapping("/v1/reward/distribution")
+public class RewardDistributionController {
 
     @Resource
     RewardDistributionService rewardDistributionService;
-
-    @Resource
-    RewardDistributionScheduled rewardDistributionScheduled;
-
-    @RequestMapping("/ods/start")
-    public void rewardDistribution() {
-        rewardDistributionScheduled.odsRewardDistribution();
-    }
 
     /**
      * 查询奖励分配列表
@@ -39,22 +28,9 @@ public class AdminRewardDistributionController {
      */
     @RequestMapping("/list")
     public MultiResponse<RewardDistributionDTO> listRewardDistribution(@RequestBody RewardDistributionListQryCmd rewardDistributionListQryCmd) {
+        Assert.notNull(rewardDistributionListQryCmd.getWalletAddress(), "钱包地址不能为空");
         return rewardDistributionService.listRewardDistribution(rewardDistributionListQryCmd);
     }
-
-    /**
-     * 发放奖励分配
-     *
-     * @param rewardDistributionIssuedCmd
-     * @return
-     */
-    @RequestMapping("/issued")
-    public SingleResponse issuedRewardDistribution(@RequestBody RewardDistributionIssuedCmd rewardDistributionIssuedCmd) {
-        Assert.notNull(rewardDistributionIssuedCmd.getId(), "奖励分配ID不能为空");
-        return rewardDistributionService.issuedRewardDistribution(rewardDistributionIssuedCmd);
-    }
-
-
     /**
      * 查询奖励分配总数
      *
@@ -63,6 +39,8 @@ public class AdminRewardDistributionController {
      */
     @RequestMapping("/total")
     public MultiResponse<RewardDistributionTotalDTO> rewardDistributionTotal(@RequestBody RewardDistributionTotalQryCmd rewardDistributionTotalQryCmd){
+
+        Assert.notNull(rewardDistributionTotalQryCmd.getAddress(), "钱包地址不能为空");
         return rewardDistributionService.rewardDistributionTotal(rewardDistributionTotalQryCmd);
     }
 

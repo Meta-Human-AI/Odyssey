@@ -7,7 +7,9 @@ import com.example.odyssey.bean.SingleResponse;
 import com.example.odyssey.bean.cmd.RewardDistributionCmd;
 import com.example.odyssey.bean.cmd.RewardDistributionIssuedCmd;
 import com.example.odyssey.bean.cmd.RewardDistributionListQryCmd;
+import com.example.odyssey.bean.cmd.RewardDistributionTotalQryCmd;
 import com.example.odyssey.bean.dto.RewardDistributionDTO;
+import com.example.odyssey.bean.dto.RewardDistributionTotalDTO;
 import com.example.odyssey.common.RebateEnum;
 import com.example.odyssey.common.RewardDistributionStatusEnum;
 import com.example.odyssey.core.service.RewardDistributionService;
@@ -91,5 +93,63 @@ public class RewardDistributionServiceImpl implements RewardDistributionService 
         rewardDistributionRecord.setRewardStatus(RewardDistributionStatusEnum.ISSUED.getCode());
         rewardDistributionRecordMapper.updateById(rewardDistributionRecord);
         return SingleResponse.buildSuccess();
+    }
+
+    @Override
+    public MultiResponse<RewardDistributionTotalDTO> rewardDistributionTotal(RewardDistributionTotalQryCmd rewardDistributionTotalQryCmd) {
+
+
+        //todo 1.查询奖励分配记录
+        QueryWrapper<RewardDistributionRecord> queryWrapper = new QueryWrapper<>();
+        if (Objects.nonNull(rewardDistributionTotalQryCmd.getAddress())) {
+            queryWrapper.eq("wallet_address", rewardDistributionTotalQryCmd.getAddress());
+        }
+
+        List<RewardDistributionRecord> rewardDistributionRecordList = rewardDistributionRecordMapper.selectList(queryWrapper);
+
+        BigDecimal odsTotalNumber = rewardDistributionRecordList.stream()
+                .filter(rewardDistributionRecord -> RebateEnum.ODS.getCode().equals(rewardDistributionRecord.getRewardType()))
+                .map(RewardDistributionRecord::getRewardNumber)
+                .map(BigDecimal::new)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal usdtTotalNumber = rewardDistributionRecordList.stream()
+                .filter(rewardDistributionRecord -> RebateEnum.USDT.getCode().equals(rewardDistributionRecord.getRewardType()))
+                .map(RewardDistributionRecord::getRewardNumber)
+                .map(BigDecimal::new)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal odsIssuedNumber = rewardDistributionRecordList.stream()
+                .filter(rewardDistributionRecord -> RebateEnum.ODS.getCode().equals(rewardDistributionRecord.getRewardType()))
+                .filter(rewardDistributionRecord -> RewardDistributionStatusEnum.ISSUED.getCode().equals(rewardDistributionRecord.getRewardStatus()))
+                .map(RewardDistributionRecord::getRewardNumber)
+                .map(BigDecimal::new)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal usdtIssuedNumber = rewardDistributionRecordList.stream()
+                .filter(rewardDistributionRecord -> RebateEnum.USDT.getCode().equals(rewardDistributionRecord.getRewardType()))
+                .filter(rewardDistributionRecord -> RewardDistributionStatusEnum.ISSUED.getCode().equals(rewardDistributionRecord.getRewardStatus()))
+                .map(RewardDistributionRecord::getRewardNumber)
+                .map(BigDecimal::new)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        RewardDistributionTotalDTO odsRewardDistributionTotalDTO = new RewardDistributionTotalDTO();
+        odsRewardDistributionTotalDTO.setRewardType(RebateEnum.ODS.getCode());
+        odsRewardDistributionTotalDTO.setRewardTotalNumber(odsTotalNumber.toString());
+        odsRewardDistributionTotalDTO.setRewardTotalIssuedNumber(odsIssuedNumber.toString());
+        odsRewardDistributionTotalDTO.setRewardTotalUnIssuedNumber(odsTotalNumber.subtract(odsIssuedNumber).toString());
+
+        RewardDistributionTotalDTO usdtRewardDistributionTotalDTO = new RewardDistributionTotalDTO();
+        usdtRewardDistributionTotalDTO.setRewardType(RebateEnum.USDT.getCode());
+        usdtRewardDistributionTotalDTO.setRewardTotalNumber(usdtTotalNumber.toString());
+        usdtRewardDistributionTotalDTO.setRewardTotalIssuedNumber(usdtIssuedNumber.toString());
+        usdtRewardDistributionTotalDTO.setRewardTotalUnIssuedNumber(usdtTotalNumber.subtract(usdtIssuedNumber).toString());
+
+        List<RewardDistributionTotalDTO> rewardDistributionTotalDTOList = new ArrayList<>();
+        rewardDistributionTotalDTOList.add(odsRewardDistributionTotalDTO);
+        rewardDistributionTotalDTOList.add(usdtRewardDistributionTotalDTO);
+
+        return MultiResponse.of(rewardDistributionTotalDTOList);
+
     }
 }

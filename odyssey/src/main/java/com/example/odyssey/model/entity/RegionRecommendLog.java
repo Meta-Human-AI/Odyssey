@@ -12,44 +12,36 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@TableName("nft_message")
-public class NftMessage {
-
+@TableName("region_recommend_log")
+public class RegionRecommendLog {
 
     @TableId(type = IdType.INPUT)
     private Integer id;
 
-    private Long tokenId;
-
-    private String url;
     /**
-     * 等级
+     * 区域推荐人的地址
+     */
+    private String regionAddress;
+
+    /**
+     * 被推荐队长
+     */
+    private String leaderAddress;
+
+    /**
+     * 返佣数量
+     */
+    private String rewardNumber;
+    /**
+     * 返佣类型
      */
     private String type;
     /**
-     * 州
+     * 对应的token_id
      */
-    private String state;
-
+    private Long tokenId;
     /**
-     * 封锁时间
+     * 奖励发放id
      */
-    private Long blockadeTime;
-
-    /**
-     * 昨天持有人
-     */
-    private String oldAddress;
-    /**
-     * 当前持有人
-     */
-    private String newAddress;
-    /**
-     * 购买人
-     */
-    private String buyAddress;
-    /**
-     * 购买时间
-     */
-    private String buyTime;
+    private Integer rewardDistributionRecordId;
 }

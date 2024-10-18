@@ -14,6 +14,11 @@ public class NftMessageDTO {
     private String type;
 
     /**
+     * 州
+     */
+    private String state;
+
+    /**
      * 封锁时间
      */
     private Long blockadeTime;
@@ -30,4 +35,9 @@ public class NftMessageDTO {
      * 购买人
      */
     private String buyAddress;
+
+    /**
+     * 购买时间
+     */
+    private String buyTime;
 }

@@ -9,7 +9,7 @@ public class OrderCreateCmd {
 
     private Long tokenId;
 
-    private String hotel;
+    private Integer hotelId;
 
     private String startTime;
 
