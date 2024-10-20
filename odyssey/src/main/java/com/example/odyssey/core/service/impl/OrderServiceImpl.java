@@ -9,6 +9,7 @@ import com.example.odyssey.bean.dto.OrderAppealDTO;
 import com.example.odyssey.bean.dto.OrderDTO;
 import com.example.odyssey.common.OrderAppealStatusEnum;
 import com.example.odyssey.common.OrderStatusEnum;
+import com.example.odyssey.common.StateEnum;
 import com.example.odyssey.core.service.EmailService;
 import com.example.odyssey.core.service.OrderService;
 import com.example.odyssey.model.entity.*;
@@ -18,6 +19,7 @@ import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
@@ -44,6 +46,8 @@ public class OrderServiceImpl implements OrderService {
     SystemConfigMapper systemConfigMapper;
     @Resource
     HotelMapper hotelMapper;
+    @Resource
+    CityMapper cityMapper;
 
     @Override
     public SingleResponse createOrder(OrderCreateCmd orderCreateCmd) {
@@ -320,7 +324,24 @@ public class OrderServiceImpl implements OrderService {
 
         List<Integer> hotelIds = orderPage.getRecords().stream().map(Order::getHotelId).collect(Collectors.toList());
 
-        Map<Integer, Hotel> hotelMap = hotelMapper.selectBatchIds(hotelIds).stream().collect(Collectors.toMap(Hotel::getId, hotel -> hotel));
+        if (CollectionUtils.isEmpty(hotelIds)){
+            return MultiResponse.buildSuccess();
+        }
+
+        List<Hotel> hotels = hotelMapper.selectBatchIds(hotelIds);
+
+        List<Long> cityIds = hotels.stream().map(Hotel::getCity).collect(Collectors.toList());
+
+        if (CollectionUtils.isEmpty(cityIds)){
+            return MultiResponse.buildSuccess();
+        }
+
+        List<City> cities = cityMapper.selectBatchIds(cityIds);
+
+        Map<Long, City> cityMap = cities.stream().collect(Collectors.toMap(City::getCode, city -> city));
+
+        Map<Integer, Hotel> hotelMap = hotels.stream().collect(Collectors.toMap(Hotel::getId, hotel -> hotel));
+
 
 
         List<OrderDTO> orderDTOList = new ArrayList<>();
@@ -334,9 +355,13 @@ public class OrderServiceImpl implements OrderService {
                 orderDTO.setHotelName(hotel.getName());
                 orderDTO.setHotelPhone(hotel.getPhone());
                 orderDTO.setHotelEmail(hotel.getEmail());
-                orderDTO.setHotelState(hotel.getState());
-                orderDTO.setHotelCity(hotel.getCity());
+                orderDTO.setHotelState(StateEnum.of(hotel.getState()).getName());
                 orderDTO.setHotelAddress(hotel.getAddress());
+
+                City city = cityMap.get(hotel.getCity());
+                if (Objects.nonNull(city)){
+                    orderDTO.setHotelCity(city.getName());
+                }
             }
             orderDTOList.add(orderDTO);
         }
