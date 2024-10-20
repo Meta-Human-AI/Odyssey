@@ -12,37 +12,16 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@TableName("`hotel`")
-public class Hotel {
+@TableName("`city`")
+public class City {
 
     @TableId(type = IdType.INPUT)
     private Integer id;
-    /**
-     * 名称
-     */
-    private String name;
-    /**
-     * 州
-     */
+
     private Long state;
-    /**
-     * 城市
-     */
-    private Long city;
-    /**
-     * 地址
-     */
-    private String address;
-    /**
-     * 电话
-     */
-    private String phone;
-    /**
-     * 邮箱
-     */
-    private String email;
-    /**
-     * 类型
-     */
-    private String type;
+
+    private Long code;
+
+    private String name;
+
 }

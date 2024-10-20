@@ -29,8 +29,11 @@ public class NftMessage {
     /**
      * 州
      */
-    private String state;
-
+    private Long state;
+    /**
+     * 城市
+     */
+    private Long city;
     /**
      * 封锁时间
      */

@@ -7,9 +7,12 @@ import com.example.odyssey.bean.SingleResponse;
 import com.example.odyssey.bean.cmd.HotelCreateCmd;
 import com.example.odyssey.bean.cmd.HotelListQryCmd;
 import com.example.odyssey.bean.dto.HotelDTO;
+import com.example.odyssey.common.StateEnum;
 import com.example.odyssey.core.service.HotelService;
+import com.example.odyssey.model.entity.City;
 import com.example.odyssey.model.entity.Hotel;
 import com.example.odyssey.model.entity.NftMessage;
+import com.example.odyssey.model.mapper.CityMapper;
 import com.example.odyssey.model.mapper.HotelMapper;
 import com.example.odyssey.model.mapper.NftMessageMapper;
 import org.springframework.beans.BeanUtils;
@@ -107,7 +110,12 @@ public class HotelServiceImpl implements HotelService {
         }
 
         QueryWrapper<Hotel> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("state", nftMessage.getState());
+        if (nftMessage.getState() != 0L){
+            queryWrapper.eq("state", nftMessage.getState());
+        }
+        if (nftMessage.getCity() != 0L){
+            queryWrapper.eq("city",nftMessage.getCity());
+        }
 
         List<Hotel> hotels = hotelMapper.selectList(queryWrapper);
 

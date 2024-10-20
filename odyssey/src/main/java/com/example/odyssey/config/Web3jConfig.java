@@ -31,34 +31,4 @@ public class Web3jConfig {
         return Web3j.build(new HttpService(ethereumNodeUrl));
     }
 
-
-    public static void main(String[] args) throws IOException {
-
-        String address = "0x263ec0Cee70Fa01c154A63695877371185FEe886";
-
-        Web3j web3j = Web3j.build(new HttpService("https://bsc-testnet.infura.io/v3/4c223b9e87754809a5d8f819a261fdb7"));
-
-        List input = Arrays.asList(new Uint256(3));
-
-        List output = Arrays.asList(new TypeReference<Uint256>() {
-        });
-
-        Function function = new Function("nftIdToLevel", input, output);
-
-        String data = FunctionEncoder.encode(function);
-
-        Transaction transaction = Transaction.createEthCallTransaction(null, address, data);
-
-        EthCall response = web3j.ethCall(transaction, DefaultBlockParameterName.LATEST).send();
-
-        boolean reverted = response.isReverted();
-
-        System.out.println(reverted);
-
-        List<Type> list = FunctionReturnDecoder.decode(response.getValue(), function.getOutputParameters());
-
-        for (Type type : list) {
-            System.out.println(type.getValue());
-        }
-    }
 }

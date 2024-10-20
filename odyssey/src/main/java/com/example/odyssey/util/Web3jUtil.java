@@ -1,5 +1,6 @@
 package com.example.odyssey.util;
 
+import com.example.odyssey.bean.dto.NftLevelDTO;
 import com.example.odyssey.common.NftLevelEnum;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,8 +15,10 @@ import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameterName;
 import org.web3j.protocol.core.methods.request.Transaction;
 import org.web3j.protocol.core.methods.response.EthCall;
+import org.web3j.protocol.http.HttpService;
 
 import javax.annotation.Resource;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -27,16 +30,20 @@ public class Web3jUtil {
     @Resource
     private Web3j web3j;
 
-    public String getNftIdToLevel(Long tokenId, String address) {
+    public NftLevelDTO getNftIdToLevel(Long tokenId, String address) {
 
         try {
 
             List input = Arrays.asList(new Uint256(tokenId));
 
-            List output = Arrays.asList(new TypeReference<Uint256>() {
-            });
+            List output = Arrays.asList(
+                    new TypeReference<Uint256>() {
+                    }, new TypeReference<Uint256>() {
+                    }, new TypeReference<Uint256>() {
+                    }
+            );
 
-            Function function = new Function("nftIdToLevel", input, output);
+            Function function = new Function("odsNfts", input, output);
 
             String data = FunctionEncoder.encode(function);
 
@@ -45,13 +52,31 @@ public class Web3jUtil {
             EthCall response = web3j.ethCall(transaction, DefaultBlockParameterName.LATEST).send();
 
             if (Objects.isNull(response.getValue())) {
-                log.error("getNftIdToLevel tokenId :{} ,response is error:{}", tokenId, response.getError().getMessage());
+                log.error("odsNfts tokenId :{} ,response is error:{}", tokenId, response.getError().getMessage());
                 return null;
             }
 
-            Long type = Long.valueOf(response.getValue().substring(2), 16);
+            List<Type> list = FunctionReturnDecoder.decode(response.getValue(), function.getOutputParameters());
 
-            return NftLevelEnum.of(type).getName();
+            Long resultTokenId = Long.valueOf(list.get(0).getValue().toString().substring(2), 16);
+
+            if (resultTokenId == 0){
+                log.error("odsNfts tokenId :{} ,result is null", tokenId);
+                return null;
+            }
+
+            Long resultLevel = Long.valueOf(list.get(1).getValue().toString().substring(2), 16);
+
+            Long resultName = Long.valueOf(list.get(2).getValue().toString().substring(2), 16);
+
+            NftLevelDTO nftLevelDTO = new NftLevelDTO();
+            nftLevelDTO.setTokenId(resultTokenId);
+            nftLevelDTO.setLevel(NftLevelEnum.of(resultLevel).getName());
+            nftLevelDTO.setName(resultName);
+
+            return nftLevelDTO;
+
+
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -59,5 +84,37 @@ public class Web3jUtil {
 
         return null;
 
+    }
+
+    public static void main(String[] args) throws IOException {
+
+        String address = "0x749d0467b583a4f1bcC74c019BaCd1879eC54669";
+
+        Web3j web3j = Web3j.build(new HttpService("https://bsc-testnet.infura.io/v3/4c223b9e87754809a5d8f819a261fdb7"));
+
+        List input = Arrays.asList(new Uint256(3));
+
+        List output = Arrays.asList(new TypeReference<Uint256>() {
+        }, new TypeReference<Uint256>() {
+        }, new TypeReference<Uint256>() {
+        });
+
+        Function function = new Function("odsNfts", input, output);
+
+        String data = FunctionEncoder.encode(function);
+
+        Transaction transaction = Transaction.createEthCallTransaction(null, address, data);
+
+        EthCall response = web3j.ethCall(transaction, DefaultBlockParameterName.LATEST).send();
+
+        boolean reverted = response.isReverted();
+
+        System.out.println(reverted);
+
+        List<Type> list = FunctionReturnDecoder.decode(response.getValue(), function.getOutputParameters());
+
+        for (Type type : list) {
+            System.out.println(type.getValue());
+        }
     }
 }

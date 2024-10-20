@@ -8,9 +8,11 @@ import com.example.odyssey.bean.cmd.NftMessageListQryCmd;
 import com.example.odyssey.bean.cmd.NftMessageQryCmd;
 import com.example.odyssey.bean.cmd.NftMessageTotalCmd;
 import com.example.odyssey.bean.cmd.NftMessageTransferCmd;
+import com.example.odyssey.bean.dto.NftLevelDTO;
 import com.example.odyssey.bean.dto.NftMessageDTO;
 import com.example.odyssey.bean.dto.NftMessageTotalDTO;
 import com.example.odyssey.common.ActionTypeEnum;
+import com.example.odyssey.common.NftLevelEnum;
 import com.example.odyssey.common.RebateEnum;
 import com.example.odyssey.common.RewardDistributionStatusEnum;
 import com.example.odyssey.core.scheduled.TransferScheduled;
@@ -63,17 +65,26 @@ public class NftMessageServiceImpl implements NftMessageService {
             return SingleResponse.of(nftMessageDTO);
         }
 
-        String nftIdToLevel = web3jUtil.getNftIdToLevel(nftMessageQryCmd.getTokenId(), nftMessageQryCmd.getAddress());
+        NftLevelDTO nftIdToLevel = web3jUtil.getNftIdToLevel(nftMessageQryCmd.getTokenId(), nftMessageQryCmd.getAddress());
         if (Objects.nonNull(nftIdToLevel)) {
 
             nftMessage = new NftMessage();
             nftMessage.setTokenId(nftMessageQryCmd.getTokenId());
-            nftMessage.setType(nftIdToLevel);
             nftMessage.setBlockadeTime(0L);
+            nftMessage.setType(nftIdToLevel.getLevel());
+
+            if (nftIdToLevel.getLevel().equals(NftLevelEnum.OA.getName())){
+                nftMessage.setState(nftIdToLevel.getName());
+            }else if (nftIdToLevel.getLevel().equals(NftLevelEnum.OB.getName())){
+                nftMessage.setCity(nftIdToLevel.getName());
+            }else {
+                nftMessage.setCity(0L);
+                nftMessage.setState(0L);
+            }
             nftMessageMapper.insert(nftMessage);
 
             nftMessageDTO.setTokenId(nftMessageQryCmd.getTokenId());
-            nftMessageDTO.setType(nftIdToLevel);
+            nftMessageDTO.setType(nftIdToLevel.getLevel());
             return SingleResponse.of(nftMessageDTO);
         }
 

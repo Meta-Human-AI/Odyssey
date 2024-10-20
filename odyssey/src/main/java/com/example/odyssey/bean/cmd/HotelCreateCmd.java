@@ -7,9 +7,9 @@ public class HotelCreateCmd {
 
     private String name;
 
-    private String state;
+    private Long state;
 
-    private String city;
+    private Long city;
 
     private String address;
 

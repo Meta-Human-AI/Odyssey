@@ -14,6 +14,7 @@ import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -46,7 +47,7 @@ public class RewardDistributionScheduled {
 
 
     /**
-     * 每天凌晨2点执行 发放昨天的ods奖励
+     * 每天凌晨执行 发放昨天的ods奖励
      */
     @Scheduled(cron = "0 0 0 * * ?")
     public void odsRewardDistribution() {
@@ -75,7 +76,7 @@ public class RewardDistributionScheduled {
             }
 
             //计算每个人获取的ods数量
-            BigDecimal number = BigDecimal.valueOf(odsConfig.getNumber()).divide(BigDecimal.valueOf(nftMessages.size()), 8, BigDecimal.ROUND_UP);
+            BigDecimal number = BigDecimal.valueOf(odsConfig.getNumber()).divide(BigDecimal.valueOf(nftMessages.size()), 8, RoundingMode.HALF_UP);
 
             for (NftMessage nftMessage : nftMessages) {
 
@@ -243,6 +244,33 @@ public class RewardDistributionScheduled {
         regionRecommendLog.setRewardDistributionRecordId(rewardDistributionRecord.getId());
 
         regionRecommendLogMapper.insert(regionRecommendLog);
+    }
+
+
+    @Scheduled(cron = "0 0/3 0 * * ?")
+    public void usdtRewardDistribution() {
+
+        QueryWrapper<RewardDistributionRecord> rewardDistributionRecordQueryWrapper = new QueryWrapper<>();
+        rewardDistributionRecordQueryWrapper.eq("reward_type",RebateEnum.USDT.getCode());
+        rewardDistributionRecordQueryWrapper.orderByDesc("token_id");
+        rewardDistributionRecordQueryWrapper.last("Limit 1");
+        RewardDistributionRecord rewardDistributionRecord = rewardDistributionRecordMapper.selectOne(rewardDistributionRecordQueryWrapper);
+
+        QueryWrapper<NftMessage> nftMessageQueryWrapper = new QueryWrapper<>();
+        nftMessageQueryWrapper.isNull("buy_address");
+        if (Objects.nonNull(rewardDistributionRecord)){
+            nftMessageQueryWrapper.ge("token_id",rewardDistributionRecord.getTokenId());
+        }
+
+        List<NftMessage> nftMessageList = nftMessageMapper.selectList(nftMessageQueryWrapper);
+
+        for (NftMessage nftMessage : nftMessageList){
+
+            Map<String, String> rebateMap = getRebateMap(nftMessage.getBuyAddress(), BigDecimal.valueOf(3600L), RebateEnum.USDT.getCode());
+
+            //todo 保存返佣记录
+            saveRewardDistributionRecord(rebateMap, nftMessage, RebateEnum.USDT.getCode());
+        }
     }
 
 }
