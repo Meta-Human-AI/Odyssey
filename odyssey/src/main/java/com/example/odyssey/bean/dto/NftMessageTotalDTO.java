@@ -13,6 +13,11 @@ public class NftMessageTotalDTO {
      * nft
      */
     private Long tokenId;
+
+    /**
+     * nft图片
+     */
+    private String url;
     /**
      * 购买或转入时间
      */

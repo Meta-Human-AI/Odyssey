@@ -1,5 +1,6 @@
 package com.example.odyssey.core.service.impl;
 
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.odyssey.bean.MultiResponse;
@@ -72,7 +73,7 @@ public class OrderServiceImpl implements OrderService {
                 if (hotel == null) {
                     return SingleResponse.buildFailure("酒店不存在");
                 }
-                if (!hotel.getState().equals(nftMessage.getState())) {
+                if (nftMessage.getState() != 0 && !hotel.getState().equals(nftMessage.getState())) {
                     return SingleResponse.buildFailure("酒店不可选择");
                 }
 
@@ -85,17 +86,17 @@ public class OrderServiceImpl implements OrderService {
                 orderMapper.insert(order);
 
                 //todo 发送邮件
-                EmailCreateCmd emailCreateCmd = new EmailCreateCmd();
-                emailCreateCmd.setEmail(orderCreateCmd.getEmail());
-                emailCreateCmd.setOrderId(order.getId());
+                EmailSendCmd emailSendCmd = new EmailSendCmd();
+                emailSendCmd.setEmail(orderCreateCmd.getEmail());
+                emailSendCmd.setOrderId(order.getId());
 
-                emailService.sendEmail(emailCreateCmd);
+                emailService.sendEmail(emailSendCmd);
 
                 Integer blockadeDay = 90;
 
                 QueryWrapper<SystemConfig> systemQueryWrapper = new QueryWrapper<>();
 
-                systemQueryWrapper.eq("key", "nft_blockade_day");
+                systemQueryWrapper.eq("`key`", "nft_blockade_day");
 
                 SystemConfig systemConfig = systemConfigMapper.selectOne(systemQueryWrapper);
 
@@ -206,6 +207,7 @@ public class OrderServiceImpl implements OrderService {
         BeanUtils.copyProperties(orderAppealCreateCmd, orderAppeal);
         orderAppeal.setStatus(OrderAppealStatusEnum.PENDING.getCode());
         orderAppeal.setCreateTime(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        orderAppeal.setImages(JSONUtil.toJsonStr(orderAppealCreateCmd.getImages()));
         orderAppealMapper.insert(orderAppeal);
 
         return SingleResponse.buildSuccess();
@@ -284,18 +286,18 @@ public class OrderServiceImpl implements OrderService {
         if (Objects.nonNull(orderListQryCmd.getTokenId())) {
             queryWrapper.eq("token_id", orderListQryCmd.getTokenId());
         }
-        if (Objects.nonNull(orderListQryCmd.getHotel())) {
-            queryWrapper.like("hotel", orderListQryCmd.getHotel());
+        if (Objects.nonNull(orderListQryCmd.getHotelId())) {
+            queryWrapper.eq("hotel_id", orderListQryCmd.getHotelId());
         }
-        if (Objects.nonNull(orderListQryCmd.getHotelState())) {
-            queryWrapper.eq("hotel_state", orderListQryCmd.getHotelState());
-        }
-        if (Objects.nonNull(orderListQryCmd.getHotelCity())) {
-            queryWrapper.eq("hotel_city", orderListQryCmd.getHotelCity());
-        }
-        if (Objects.nonNull(orderListQryCmd.getHotelAddress())) {
-            queryWrapper.like("hotel_address", orderListQryCmd.getHotelAddress());
-        }
+//        if (Objects.nonNull(orderListQryCmd.getHotelState())) {
+//            queryWrapper.eq("hotel_state", orderListQryCmd.getHotelState());
+//        }
+//        if (Objects.nonNull(orderListQryCmd.getHotelCity())) {
+//            queryWrapper.eq("hotel_city", orderListQryCmd.getHotelCity());
+//        }
+//        if (Objects.nonNull(orderListQryCmd.getHotelAddress())) {
+//            queryWrapper.like("hotel_address", orderListQryCmd.getHotelAddress());
+//        }
         if (Objects.nonNull(orderListQryCmd.getName())) {
             queryWrapper.like("name", orderListQryCmd.getName());
         }
@@ -324,7 +326,7 @@ public class OrderServiceImpl implements OrderService {
 
         List<Integer> hotelIds = orderPage.getRecords().stream().map(Order::getHotelId).collect(Collectors.toList());
 
-        if (CollectionUtils.isEmpty(hotelIds)){
+        if (CollectionUtils.isEmpty(hotelIds)) {
             return MultiResponse.buildSuccess();
         }
 
@@ -332,7 +334,7 @@ public class OrderServiceImpl implements OrderService {
 
         List<Long> cityIds = hotels.stream().map(Hotel::getCity).collect(Collectors.toList());
 
-        if (CollectionUtils.isEmpty(cityIds)){
+        if (CollectionUtils.isEmpty(cityIds)) {
             return MultiResponse.buildSuccess();
         }
 
@@ -343,13 +345,11 @@ public class OrderServiceImpl implements OrderService {
         Map<Integer, Hotel> hotelMap = hotels.stream().collect(Collectors.toMap(Hotel::getId, hotel -> hotel));
 
 
-
         List<OrderDTO> orderDTOList = new ArrayList<>();
 
         for (Order order : orderPage.getRecords()) {
             OrderDTO orderDTO = new OrderDTO();
             BeanUtils.copyProperties(order, orderDTO);
-
             Hotel hotel = hotelMap.get(order.getHotelId());
             if (Objects.nonNull(hotel)) {
                 orderDTO.setHotelName(hotel.getName());
@@ -359,7 +359,7 @@ public class OrderServiceImpl implements OrderService {
                 orderDTO.setHotelAddress(hotel.getAddress());
 
                 City city = cityMap.get(hotel.getCity());
-                if (Objects.nonNull(city)){
+                if (Objects.nonNull(city)) {
                     orderDTO.setHotelCity(city.getName());
                 }
             }
@@ -390,11 +390,11 @@ public class OrderServiceImpl implements OrderService {
 
         List<OrderAppealDTO> orderAppealDTOList = new ArrayList<>();
 
-        for (OrderAppeal orderAppeal : orderAppealPage.getRecords()){
+        for (OrderAppeal orderAppeal : orderAppealPage.getRecords()) {
 
             OrderAppealDTO orderAppealDTO = new OrderAppealDTO();
-            BeanUtils.copyProperties(orderAppeal,orderAppealDTO);
-
+            BeanUtils.copyProperties(orderAppeal, orderAppealDTO);
+            orderAppealDTO.setImages(JSONUtil.toList(orderAppeal.getImages(), String.class));
             orderAppealDTOList.add(orderAppealDTO);
         }
 

@@ -58,16 +58,16 @@ public class Web3jUtil {
 
             List<Type> list = FunctionReturnDecoder.decode(response.getValue(), function.getOutputParameters());
 
-            Long resultTokenId = Long.valueOf(list.get(0).getValue().toString().substring(2), 16);
+            Long resultTokenId = Long.valueOf(list.get(0).getValue().toString());
 
-            if (resultTokenId == 0){
+            Long resultLevel = Long.valueOf(list.get(1).getValue().toString());
+
+            if (resultLevel == 0){
                 log.error("odsNfts tokenId :{} ,result is null", tokenId);
                 return null;
             }
 
-            Long resultLevel = Long.valueOf(list.get(1).getValue().toString().substring(2), 16);
-
-            Long resultName = Long.valueOf(list.get(2).getValue().toString().substring(2), 16);
+            Long resultName = Long.valueOf(list.get(2).getValue().toString());
 
             NftLevelDTO nftLevelDTO = new NftLevelDTO();
             nftLevelDTO.setTokenId(resultTokenId);

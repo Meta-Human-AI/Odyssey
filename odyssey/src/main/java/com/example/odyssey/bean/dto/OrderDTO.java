@@ -2,6 +2,8 @@ package com.example.odyssey.bean.dto;
 
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 public class OrderDTO {
 
@@ -89,5 +91,7 @@ public class OrderDTO {
      * 取消或审批拒绝原因
      */
     private String reason;
+
+
 
 }

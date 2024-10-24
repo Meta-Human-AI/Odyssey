@@ -13,4 +13,7 @@ public class RecommendListDTO {
 
 
     private List<RecommendListDTO> recommendList;
+
+
+    private Integer count = 0;
 }

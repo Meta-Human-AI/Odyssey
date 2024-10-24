@@ -17,6 +17,10 @@ public class NftMessageDTO {
      * 州
      */
     private String state;
+    /**
+     * 城市
+     */
+    private String city;
 
     /**
      * 封锁时间

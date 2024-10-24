@@ -59,4 +59,6 @@ public class RecommendController {
 
         return recommendService.getRecommendList(recommendListQryCmd);
     }
+
+    //todo 统计推荐人数
 }

@@ -21,8 +21,19 @@ public class NftMessageListQryCmd extends PageQuery {
     private String buyAddress;
 
     private Long tokenId;
-
+    /**
+     * 等级
+     */
     private String type;
+
+    /**
+     * 州
+     */
+    private String state;
+    /**
+     * 城市
+     */
+    private String city;
 
 
 }

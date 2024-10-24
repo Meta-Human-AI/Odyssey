@@ -5,10 +5,7 @@ import com.example.odyssey.bean.cmd.TransactionRecordListQryCmd;
 import com.example.odyssey.bean.dto.TransactionRecordDTO;
 import com.example.odyssey.core.scheduled.TransactionRecordScheduled;
 import com.example.odyssey.core.service.TransactionRecordService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 
@@ -27,8 +24,10 @@ public class AdminTransactionRecordController {
         transactionRecordScheduled.transactionRecord();
     }
 
-    @GetMapping("/list")
+    @PostMapping("/list")
     MultiResponse<TransactionRecordDTO> listTransactionRecord(@RequestBody TransactionRecordListQryCmd transactionRecordListQryCmd){
         return transactionRecordService.listTransactionRecord(transactionRecordListQryCmd);
     }
+
+
 }

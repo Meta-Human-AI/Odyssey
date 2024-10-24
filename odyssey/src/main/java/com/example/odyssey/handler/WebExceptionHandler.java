@@ -16,8 +16,6 @@ public class WebExceptionHandler {
 
         runtimeException.printStackTrace();
 
-        runtimeException.printStackTrace();
-
         SingleResponse response = new SingleResponse();
         response.setCode(500);
         response.setErrMessage(runtimeException.getMessage());

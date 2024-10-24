@@ -3,11 +3,14 @@ package com.example.odyssey.core.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.example.odyssey.bean.SingleResponse;
 import com.example.odyssey.bean.cmd.EmailCreateCmd;
+import com.example.odyssey.bean.cmd.EmailSendCmd;
 import com.example.odyssey.bean.cmd.EmailVerifyCmd;
 import com.example.odyssey.common.OrderStatusEnum;
 import com.example.odyssey.core.service.EmailService;
+import com.example.odyssey.model.entity.Email;
 import com.example.odyssey.model.entity.Order;
 import com.example.odyssey.model.entity.SystemConfig;
+import com.example.odyssey.model.mapper.EmailMapper;
 import com.example.odyssey.model.mapper.OrderMapper;
 import com.example.odyssey.model.mapper.SystemConfigMapper;
 import com.example.odyssey.util.EmailUtil;
@@ -28,6 +31,9 @@ import java.util.concurrent.TimeUnit;
 public class EmailServiceImpl implements EmailService {
 
     @Resource
+    EmailMapper emailMapper;
+
+    @Resource
     EmailUtil emailUtil;
 
     @Resource
@@ -45,13 +51,32 @@ public class EmailServiceImpl implements EmailService {
     @Value("${spring.mail.username}")
     private String from;
 
+    @Override
+    public SingleResponse createEmail(EmailCreateCmd emailCreateCmd) {
+
+        QueryWrapper<Email> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("email", emailCreateCmd.getEmail());
+
+        Email email = emailMapper.selectOne(queryWrapper);
+        if (Objects.nonNull(email)) {
+            return SingleResponse.buildSuccess();
+        }
+
+        email = new Email();
+        email.setEmail(email.getEmail());
+
+        emailMapper.insert(email);
+
+        return SingleResponse.buildSuccess();
+    }
+
     @SneakyThrows
     @Override
-    public SingleResponse sendEmail(EmailCreateCmd emailCreateCmd) {
+    public SingleResponse sendEmail(EmailSendCmd emailSendCmd) {
 
         QueryWrapper<SystemConfig> systemQueryWrapper = new QueryWrapper<>();
 
-        systemQueryWrapper.eq("key", "ods_url");
+        systemQueryWrapper.eq("`key`", "url");
 
         SystemConfig systemConfig = systemConfigMapper.selectOne(systemQueryWrapper);
 
@@ -66,14 +91,14 @@ public class EmailServiceImpl implements EmailService {
         // todo 发送邮件
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom(from);
-        message.setTo(emailCreateCmd.getEmail());
+        message.setTo(emailSendCmd.getEmail());
         message.setSubject("Email Verification");
         message.setText(emailContent);
 
         javaMailSender.send(message);
 
         // todo 将验证码存入redis
-        redisTemplate.opsForValue().set("ODYSSEY:EMAIL:VERIFICATION：" + verificationCode, emailCreateCmd.getOrderId(), 5, TimeUnit.MINUTES);
+        redisTemplate.opsForValue().set("ODYSSEY:EMAIL:VERIFICATION：" + verificationCode, emailSendCmd.getOrderId(), 5, TimeUnit.MINUTES);
 
         return SingleResponse.buildSuccess();
     }

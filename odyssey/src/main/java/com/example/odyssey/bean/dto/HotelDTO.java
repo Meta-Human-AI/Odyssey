@@ -2,6 +2,8 @@ package com.example.odyssey.bean.dto;
 
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 public class HotelDTO {
 
@@ -25,5 +27,16 @@ public class HotelDTO {
     private String email;
 
 
-    private String type;
+    /**
+     * 简介
+     */
+    private String introduction;
+    /**
+     * 图片
+     */
+    private List<String> image;
+    /**
+     * 官网
+     */
+    private String officialWebsite;
 }

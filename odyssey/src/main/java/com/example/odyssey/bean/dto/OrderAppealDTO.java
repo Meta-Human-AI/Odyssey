@@ -2,6 +2,8 @@ package com.example.odyssey.bean.dto;
 
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 public class OrderAppealDTO {
 
@@ -30,4 +32,8 @@ public class OrderAppealDTO {
      * 处理时间
      */
     private String finishTime;
+    /**
+     * 申诉图片
+     */
+    private List<String> images;
 }

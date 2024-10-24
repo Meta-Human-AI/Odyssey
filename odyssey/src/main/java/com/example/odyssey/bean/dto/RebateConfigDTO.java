@@ -23,11 +23,6 @@ public class RebateConfigDTO {
     private String secondRebateRate;
 
     /**
-     * 三级推荐人返利比例
-     */
-    private String thirdRebateRate;
-
-    /**
      * 推荐类型
      */
     private String recommendType;

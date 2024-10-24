@@ -1,8 +1,7 @@
 package com.example.odyssey.api.admin;
 
 import com.example.odyssey.bean.SingleResponse;
-import com.example.odyssey.bean.cmd.EmailCreateCmd;
-import com.example.odyssey.bean.cmd.EmailVerifyCmd;
+import com.example.odyssey.bean.cmd.EmailSendCmd;
 import com.example.odyssey.core.service.EmailService;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,8 +15,8 @@ public class AdminEmailController {
     private EmailService emailService;
 
     @PostMapping("/send")
-    public SingleResponse send(@RequestBody EmailCreateCmd emailCreateCmd) {
-        return emailService.sendEmail(emailCreateCmd);
+    public SingleResponse send(@RequestBody EmailSendCmd emailSendCmd) {
+        return emailService.sendEmail(emailSendCmd);
     }
 
 }

@@ -60,13 +60,15 @@ public class RecommendServiceImpl implements RecommendService {
 
                 RecommendCoreDTO recommendCoreDTO = new RecommendCoreDTO();
 
-                Object recommendCore = redisTemplate.opsForValue().get(recommendCoreCreateCmd.getWalletAddress());
-                if (Objects.nonNull(recommendCore)) {
-                    recommendCoreDTO.setRecommendCore(recommendCore.toString());
+                QueryWrapper<RecommendCoreLog> recommendCoreLogQueryWrapper = new QueryWrapper<>();
+                recommendCoreLogQueryWrapper.eq("wallet_address", recommendCoreCreateCmd.getWalletAddress());
+                RecommendCoreLog recommendCoreLog = recommendCoreLogMapper.selectOne(recommendCoreLogQueryWrapper);
+                if (Objects.nonNull(recommendCoreLog)) {
+                    recommendCoreDTO.setRecommendCore(recommendCoreLog.getRecommendCore());
                     return SingleResponse.of(recommendCoreDTO);
                 }
 
-                RecommendCoreLog recommendCoreLog = new RecommendCoreLog();
+                recommendCoreLog = new RecommendCoreLog();
                 recommendCoreLog.setWalletAddress(recommendCoreCreateCmd.getWalletAddress());
 
                 String randomAlphabetic;
@@ -91,7 +93,7 @@ public class RecommendServiceImpl implements RecommendService {
 
                 QueryWrapper<SystemConfig> systemQueryWrapper = new QueryWrapper<>();
 
-                systemQueryWrapper.eq("key", "ods_url");
+                systemQueryWrapper.eq("`key`", "ods_url");
 
                 SystemConfig systemConfig = systemConfigMapper.selectOne(systemQueryWrapper);
 
@@ -131,7 +133,7 @@ public class RecommendServiceImpl implements RecommendService {
             recommendCoreLogQueryWrapper.eq("recommend_core", recommendCreateCmd.getRecommendCore());
             RecommendCoreLog recommendCoreLog = recommendCoreLogMapper.selectOne(recommendCoreLogQueryWrapper);
 
-            if (Objects.nonNull(recommendCoreLog)){
+            if (Objects.isNull(recommendCoreLog)) {
                 return SingleResponse.buildFailure("推荐码不存在");
             }
 
@@ -154,7 +156,7 @@ public class RecommendServiceImpl implements RecommendService {
 
             Recommend newRecommend = new Recommend();
             newRecommend.setWalletAddress(recommendCreateCmd.getWalletAddress());
-            newRecommend.setRecommendWalletAddress( recommendCoreLog.getWalletAddress()    );
+            newRecommend.setRecommendWalletAddress(recommendCoreLog.getWalletAddress());
             newRecommend.setRecommendCode(recommendCreateCmd.getRecommendCore());
             newRecommend.setLeaderWalletAddress(recommend.getLeaderWalletAddress());
 
@@ -236,7 +238,7 @@ public class RecommendServiceImpl implements RecommendService {
     private void getRecommendList(RecommendListDTO recommendListDTO) {
 
         QueryWrapper<Recommend> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("first_recommend_wallet_address", recommendListDTO.getWalletAddress());
+        queryWrapper.eq("recommend_wallet_address", recommendListDTO.getWalletAddress());
 
         List<Recommend> recommends = recommendMapper.selectList(queryWrapper);
         if (CollectionUtils.isEmpty(recommends)) {
@@ -246,9 +248,11 @@ public class RecommendServiceImpl implements RecommendService {
 
         for (Recommend recommend : recommends) {
 
+            recommendListDTO.setCount(recommendListDTO.getCount() + 1);
+
             RecommendListDTO childRecommend = new RecommendListDTO();
             childRecommend.setWalletAddress(recommend.getWalletAddress());
-            childRecommendList.add(recommendListDTO);
+            childRecommendList.add(childRecommend);
 
             getRecommendList(childRecommend);
         }

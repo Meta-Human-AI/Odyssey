@@ -10,9 +10,8 @@ import com.example.odyssey.bean.dto.RewardDistributionDTO;
 import com.example.odyssey.bean.dto.RewardDistributionTotalDTO;
 import com.example.odyssey.core.scheduled.RewardDistributionScheduled;
 import com.example.odyssey.core.service.RewardDistributionService;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import lombok.Getter;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 
@@ -26,7 +25,7 @@ public class AdminRewardDistributionController {
     @Resource
     RewardDistributionScheduled rewardDistributionScheduled;
 
-    @RequestMapping("/ods/start")
+    @GetMapping("/ods/start")
     public void rewardDistribution() {
         rewardDistributionScheduled.odsRewardDistribution();
     }
@@ -37,7 +36,7 @@ public class AdminRewardDistributionController {
      * @param rewardDistributionListQryCmd
      * @return
      */
-    @RequestMapping("/list")
+    @PostMapping("/list")
     public MultiResponse<RewardDistributionDTO> listRewardDistribution(@RequestBody RewardDistributionListQryCmd rewardDistributionListQryCmd) {
         return rewardDistributionService.listRewardDistribution(rewardDistributionListQryCmd);
     }
@@ -48,7 +47,7 @@ public class AdminRewardDistributionController {
      * @param rewardDistributionIssuedCmd
      * @return
      */
-    @RequestMapping("/issued")
+    @PostMapping("/issued")
     public SingleResponse issuedRewardDistribution(@RequestBody RewardDistributionIssuedCmd rewardDistributionIssuedCmd) {
         Assert.notNull(rewardDistributionIssuedCmd.getId(), "奖励分配ID不能为空");
         return rewardDistributionService.issuedRewardDistribution(rewardDistributionIssuedCmd);
@@ -61,7 +60,7 @@ public class AdminRewardDistributionController {
      * @param rewardDistributionTotalQryCmd
      * @return
      */
-    @RequestMapping("/total")
+    @PostMapping("/total")
     public MultiResponse<RewardDistributionTotalDTO> rewardDistributionTotal(@RequestBody RewardDistributionTotalQryCmd rewardDistributionTotalQryCmd){
         return rewardDistributionService.rewardDistributionTotal(rewardDistributionTotalQryCmd);
     }

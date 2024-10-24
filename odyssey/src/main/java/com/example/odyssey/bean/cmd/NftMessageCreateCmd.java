@@ -3,7 +3,8 @@ package com.example.odyssey.bean.cmd;
 import lombok.Data;
 
 @Data
-public class EmailCreateCmd {
+public class NftMessageCreateCmd {
 
-    private String email;
+    private String data;
+
 }

@@ -17,20 +17,16 @@ public class OrderListQryCmd extends PageQuery {
     /**
      * 酒店
      */
-    private String hotel;
+    private Integer hotelId;
     /**
      * 酒店所在州
      */
-    private String hotelState;
+    private Long hotelState;
 
     /**
      * 酒店所在城市
      */
-    private String hotelCity;
-    /**
-     * 酒店所在街道
-     */
-    private String hotelAddress;
+    private Long hotelCity;
 
     /**
      * 联系人

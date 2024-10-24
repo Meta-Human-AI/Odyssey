@@ -42,7 +42,15 @@ public class Hotel {
      */
     private String email;
     /**
-     * 类型
+     * 简介
      */
-    private String type;
+    private String introduction;
+    /**
+     * 图片
+     */
+    private String image;
+    /**
+     * 官网
+     */
+    private String officialWebsite;
 }

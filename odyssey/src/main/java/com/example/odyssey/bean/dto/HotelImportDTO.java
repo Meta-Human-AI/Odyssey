@@ -6,21 +6,30 @@ import lombok.Data;
 @Data
 public class HotelImportDTO {
 
-    @ExcelProperty(value = "酒店名称")
+    @ExcelProperty(value = "HOTEL_NAME")
     private String name;
 
-    @ExcelProperty(value = "所在州")
-    private String state;
+    @ExcelProperty(value = "HOTEL_CITY_STATE")
+    private String stateName;
 
-    @ExcelProperty(value = "所在城市")
-    private String city;
+    @ExcelProperty(value = "HOTEL_CITY")
+    private String cityName;
 
-    @ExcelProperty(value = "详细地址")
+    @ExcelProperty(value = "HOTEL_DETAIL_ADDRESS")
     private String address;
 
-    @ExcelProperty(value = "酒店手机号")
+    @ExcelProperty(value = "HOTEL_PHONE")
     private String phone;
 
-    @ExcelProperty(value = "酒店邮箱")
+    @ExcelProperty(value = "HOTEL_EMAIL")
     private String email;
+
+    @ExcelProperty(value = "HOTEL_INTRODUCTION")
+    private String introduction;
+
+    @ExcelProperty(value = "HOTEL_OFFICCIAL_WEBSITE")
+    private String officialWebsite;
+
+    @ExcelProperty(value = "HOTEL_PICTURE_URL")
+    private String image;
 }

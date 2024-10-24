@@ -122,6 +122,10 @@ public class RewardDistributionScheduled {
             rebateConfigQueryWrapper.eq("rebate_type", rebateType);
             RebateConfig rebateConfig = rebateConfigMapper.selectOne(rebateConfigQueryWrapper);
 
+            if (Objects.isNull(rebateConfig)) {
+                return rebateMap;
+            }
+
             if (Objects.nonNull(recommend.getFirstRecommendWalletAddress())) {
                 //代表当前用户处在二级
                 if (Objects.isNull(recommend.getSecondRecommendWalletAddress())) {
@@ -176,9 +180,17 @@ public class RewardDistributionScheduled {
             QueryWrapper<RewardDistributionRecord> rewardDistributionRecordQueryWrapper = new QueryWrapper();
             rewardDistributionRecordQueryWrapper.eq("wallet_address", k);
             rewardDistributionRecordQueryWrapper.eq("token_id", nftMessage.getTokenId());
-            rewardDistributionRecordQueryWrapper.between("create_time", startDateTime, endDateTime);
+            rewardDistributionRecordQueryWrapper.eq("reward_type", rebateType);
+            if (rebateType.equals(RebateEnum.ODS.getCode())) {
+                rewardDistributionRecordQueryWrapper.between("create_time", startDateTime, endDateTime);
+            }
 
-            RewardDistributionRecord rewardDistributionRecord = new RewardDistributionRecord();
+            RewardDistributionRecord rewardDistributionRecord = rewardDistributionRecordMapper.selectOne(rewardDistributionRecordQueryWrapper);
+            if (Objects.nonNull(rewardDistributionRecord)) {
+                return;
+            }
+
+            rewardDistributionRecord = new RewardDistributionRecord();
             rewardDistributionRecord.setWalletAddress(k);
             rewardDistributionRecord.setTokenId(nftMessage.getTokenId());
             rewardDistributionRecord.setRewardNumber(v);
@@ -247,30 +259,34 @@ public class RewardDistributionScheduled {
     }
 
 
-    @Scheduled(cron = "0 0/3 0 * * ?")
+    @Scheduled(cron = "0 0/3 * * * ?")
     public void usdtRewardDistribution() {
 
+        log.info("usdtRewardDistribution 开始执行");
+
         QueryWrapper<RewardDistributionRecord> rewardDistributionRecordQueryWrapper = new QueryWrapper<>();
-        rewardDistributionRecordQueryWrapper.eq("reward_type",RebateEnum.USDT.getCode());
+        rewardDistributionRecordQueryWrapper.eq("reward_type", RebateEnum.USDT.getCode());
         rewardDistributionRecordQueryWrapper.orderByDesc("token_id");
         rewardDistributionRecordQueryWrapper.last("Limit 1");
         RewardDistributionRecord rewardDistributionRecord = rewardDistributionRecordMapper.selectOne(rewardDistributionRecordQueryWrapper);
 
         QueryWrapper<NftMessage> nftMessageQueryWrapper = new QueryWrapper<>();
-        nftMessageQueryWrapper.isNull("buy_address");
-        if (Objects.nonNull(rewardDistributionRecord)){
-            nftMessageQueryWrapper.ge("token_id",rewardDistributionRecord.getTokenId());
+        nftMessageQueryWrapper.isNotNull("buy_address");
+        if (Objects.nonNull(rewardDistributionRecord)) {
+            nftMessageQueryWrapper.ge("token_id", rewardDistributionRecord.getTokenId());
         }
 
         List<NftMessage> nftMessageList = nftMessageMapper.selectList(nftMessageQueryWrapper);
 
-        for (NftMessage nftMessage : nftMessageList){
+        for (NftMessage nftMessage : nftMessageList) {
 
             Map<String, String> rebateMap = getRebateMap(nftMessage.getBuyAddress(), BigDecimal.valueOf(3600L), RebateEnum.USDT.getCode());
 
             //todo 保存返佣记录
             saveRewardDistributionRecord(rebateMap, nftMessage, RebateEnum.USDT.getCode());
         }
+
+        log.info("usdtRewardDistribution 结束执行");
     }
 
 }

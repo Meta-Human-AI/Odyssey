@@ -41,4 +41,6 @@ public class OrderAppeal {
      * 处理时间
      */
     private String finishTime;
+
+    private String images;
 }

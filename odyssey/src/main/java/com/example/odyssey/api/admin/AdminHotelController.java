@@ -7,9 +7,11 @@ import com.example.odyssey.bean.MultiResponse;
 import com.example.odyssey.bean.SingleResponse;
 import com.example.odyssey.bean.cmd.HotelCreateCmd;
 import com.example.odyssey.bean.cmd.HotelListQryCmd;
+import com.example.odyssey.bean.cmd.HotelUpdateCmd;
 import com.example.odyssey.bean.dto.HotelDTO;
 import com.example.odyssey.bean.dto.HotelImportDTO;
 import com.example.odyssey.core.service.HotelService;
+import com.example.odyssey.util.MinioUtils;
 import lombok.SneakyThrows;
 import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -27,6 +29,8 @@ public class AdminHotelController {
 
     @Resource
     HotelService hotelService;
+    @Resource
+    MinioUtils minioUtils;
 
     @SneakyThrows
     @PostMapping("/import")
@@ -66,5 +70,29 @@ public class AdminHotelController {
         Assert.notNull(hotelCreateCmd.getEmail(), "酒店邮箱不能为空");
 
         return hotelService.createHotel(hotelCreateCmd);
+    }
+    @PostMapping("/update")
+    public SingleResponse updateHotel(@RequestBody HotelUpdateCmd hotelUpdateCmd){
+        Assert.notNull(hotelUpdateCmd.getId(), "酒店id不能为空");
+        Assert.notNull(hotelUpdateCmd.getName(), "酒店名称不能为空");
+        Assert.notNull(hotelUpdateCmd.getState(), "所在州不能为空");
+        Assert.notNull(hotelUpdateCmd.getCity(), "所在城市不能为空");
+        Assert.notNull(hotelUpdateCmd.getAddress(), "详细地址不能为空");
+        Assert.notNull(hotelUpdateCmd.getPhone(), "酒店手机号不能为空");
+        Assert.notNull(hotelUpdateCmd.getEmail(), "酒店邮箱不能为空");
+
+        return hotelService.updateHotel(hotelUpdateCmd);
+    }
+
+
+    @PostMapping("/upload")
+    public SingleResponse<String> upload(@RequestBody MultipartFile file) {
+        try {
+            String hotel = minioUtils.upload("hotel", file);
+            return SingleResponse.of(hotel);
+        }catch (Exception e) {
+            e.printStackTrace();
+            return SingleResponse.buildFailure("文件上传异常");
+        }
     }
 }
