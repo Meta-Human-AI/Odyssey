@@ -8,10 +8,12 @@ import com.example.odyssey.bean.dto.OrderAppealDTO;
 import com.example.odyssey.bean.dto.OrderDTO;
 import com.example.odyssey.core.service.OrderService;
 import com.example.odyssey.util.EmailUtil;
+import com.example.odyssey.util.MinioUtils;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 
@@ -21,7 +23,8 @@ public class OrderController {
 
     @Resource
     EmailUtil emailUtil;
-
+    @Resource
+    MinioUtils minioUtils;
     @Resource
     OrderService orderService;
 
@@ -65,6 +68,17 @@ public class OrderController {
     SingleResponse appealOrder(@RequestBody OrderAppealCreateCmd orderAppealCreateCmd) {
         Assert.notNull(orderAppealCreateCmd.getOrderId(), "订单id不能为空");
         return orderService.appealOrder(orderAppealCreateCmd);
+    }
+
+    @PostMapping("/appeal/upload")
+    public SingleResponse<String> upload(@RequestBody MultipartFile file) {
+        try {
+            String hotel = minioUtils.upload("order-appeal", file);
+            return SingleResponse.of(hotel);
+        }catch (Exception e) {
+            e.printStackTrace();
+            return SingleResponse.buildFailure("文件上传异常");
+        }
     }
 
     /**
