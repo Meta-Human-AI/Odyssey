@@ -175,15 +175,12 @@ public class AESUtils {
 
     public static void main(String[] args) throws Exception {
         //原文
-        String context = "{\n" +
-                "    \"address\":\"0xf55cb47ff38abad5d7dc59d5102361c3d2edaaac\",\n" +
-                "    \"tokenId\":4\n" +
-                "}";
+        String context = "odysses@2024";
         //压缩为字节数组
         byte[] compress = context.getBytes();
         //加密后
         String aesCode = AESEncode(compress);
-        String str = "gY0udAXJqcXeEt9eDGC5YKmrW/3t/2MTOvS4POgWCtn/lnzWMqJjrxmQHnr2p/+Dsebl0pSG6fIiskqSk5YPCcl9x+OCF++GPQI2PqfI0xM=";
+        String str = "HsSyvSqrSwuwe34npv1N7A==";
         //str = str.replace(" ", "+");
         System.out.println("加密后：" + aesCode);
         //解密
@@ -192,7 +189,7 @@ public class AESUtils {
         System.out.println("解密后：" + aesdecode);
 
         //在加密
-        System.out.println("加密后：" + DigestUtils.sha1Hex(aesdecode));
+        System.out.println("加密后：" + DigestUtils.sha1Hex("odysses@2024"));
     }
 
 }
