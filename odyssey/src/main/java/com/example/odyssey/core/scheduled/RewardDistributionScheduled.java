@@ -88,6 +88,15 @@ public class RewardDistributionScheduled {
 
                 Map<String, String> rebateMap = getRebateMap(address, number, RebateEnum.ODS.getCode());
 
+                if (!address.equals(nftMessage.getOldAddress())){
+
+                    String reward = rebateMap.get(address);
+
+                    rebateMap.remove(address);
+
+                    rebateMap.put(nftMessage.getOldAddress(), reward);
+                }
+
                 //todo 保存返佣记录
                 saveRewardDistributionRecord(rebateMap, nftMessage, RebateEnum.ODS.getCode());
             }
@@ -158,7 +167,7 @@ public class RewardDistributionScheduled {
         } else {
             //没有推荐人
             if (rebateType.equals(RebateEnum.ODS.getCode())) {
-                rebateMap.put(recommend.getWalletAddress(), number.toString());
+                rebateMap.put(address, number.toString());
             }
         }
 

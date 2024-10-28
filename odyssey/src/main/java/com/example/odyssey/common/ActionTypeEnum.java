@@ -5,6 +5,8 @@ import lombok.Getter;
 @Getter
 public enum ActionTypeEnum {
     BUY("buy", "购买"),
+
+    AIRDROP("airdrop", "空投"),
     TRANSFER_OUT("transferOut", "转出"),
 
     TRANSFER_IN("transferIn", "转入");

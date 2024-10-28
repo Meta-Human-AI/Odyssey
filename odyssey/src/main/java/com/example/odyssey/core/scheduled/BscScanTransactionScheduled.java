@@ -74,7 +74,7 @@ public class BscScanTransactionScheduled {
 
     }
 
-    @Scheduled(cron = "0 0/10 * * * ?")
+    @Scheduled(cron = "0 0/5 * * * ?")
     @SneakyThrows
     public void transactionLogRecord() {
 
