@@ -253,9 +253,10 @@ public class RecommendServiceImpl implements RecommendService {
             RecommendListDTO childRecommend = new RecommendListDTO();
             childRecommend.setWalletAddress(recommend.getWalletAddress());
             childRecommendList.add(childRecommend);
-
             getRecommendList(childRecommend);
         }
+
+        recommendListDTO.setCount(childRecommendList.stream().map(RecommendListDTO::getCount).reduce(Integer::sum).orElse(0) + childRecommendList.size());
         recommendListDTO.setRecommendList(childRecommendList);
 
     }

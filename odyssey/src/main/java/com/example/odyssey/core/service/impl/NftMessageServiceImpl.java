@@ -108,7 +108,7 @@ public class NftMessageServiceImpl implements NftMessageService {
         if (Objects.nonNull(nftIdToLevel)) {
 
             QueryWrapper<SystemConfig> systemConfigQueryWrapper = new QueryWrapper<>();
-            systemConfigQueryWrapper.eq("key",nftIdToLevel.getLevel());
+            systemConfigQueryWrapper.eq("`key`",nftIdToLevel.getLevel());
             SystemConfig systemConfig = systemConfigMapper.selectOne(systemConfigQueryWrapper);
 
             nftMessage = new NftMessage();
