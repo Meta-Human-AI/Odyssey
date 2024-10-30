@@ -154,8 +154,13 @@ public class BscScanTransactionScheduled {
             paramMap.put("module", "account");
             paramMap.put("action", "txlist");
 
-
-            String response = HttpUtil.get(url, paramMap);
+            String response = "";
+            try {
+                response = HttpUtil.get(url, paramMap);
+            } catch (Exception e) {
+                e.printStackTrace();
+                break;
+            }
 
             BscScanAccountTransactionResponseDTO bscScanAccountTransactionResponseDTO = JSONUtil.toBean(response, BscScanAccountTransactionResponseDTO.class);
 
@@ -172,7 +177,6 @@ public class BscScanTransactionScheduled {
             saveBscScanAccountTransaction(Collections.singletonList(bscScanAccountTransactionResponseDTO));
 
 //            bscScanAccountTransactionResponseList.add(bscScanAccountTransactionResponseDTO);
-
 
 
             BscScanAccountTransactionDTO bscScanAccountTransactionDTO = bscScanAccountTransactionResponseDTO.getResult().get(bscScanAccountTransactionResponseDTO.getResult().size() - 1);
@@ -312,7 +316,13 @@ public class BscScanTransactionScheduled {
             paramMap.put("action", "getLogs");
             paramMap.put("topic0", "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef");
 
-            String response = HttpUtil.get(url, paramMap);
+            String response = "";
+            try {
+                response = HttpUtil.get(url, paramMap);
+            } catch (Exception e) {
+                e.printStackTrace();
+                break;
+            }
 
             BscScanTransactionLogResponseDTO bscScanTransactionLogResponseDTO = JSONUtil.toBean(response, BscScanTransactionLogResponseDTO.class);
 
@@ -330,7 +340,6 @@ public class BscScanTransactionScheduled {
             saveBscScanTransactionLog(Collections.singletonList(bscScanTransactionLogResponseDTO));
 
 //            bscScanTransactionLogResponseList.add(bscScanTransactionLogResponseDTO);
-
 
 
             BscScanTransactionLogDTO bscScanTransactionLogDTO = bscScanTransactionLogResponseDTO.getResult().get(bscScanTransactionLogResponseDTO.getResult().size() - 1);
@@ -392,7 +401,7 @@ public class BscScanTransactionScheduled {
                 BeanUtils.copyProperties(bscScanTransactionLogDTO, bscScanTransactionLog);
                 bscScanTransactionLog.setTopics(JSONUtil.toJsonStr(bscScanTransactionLogDTO.getTopics()));
                 bscScanTransactionLog.setDecodedBlockNumber(Long.parseLong(bscScanTransactionLogDTO.getBlockNumber().substring(2), 16));
-                InputDataDecoderUtil.BscScanLogTransaction(bscScanTransactionLog,bscScanTransactionLogDTO.getTopics());
+                InputDataDecoderUtil.BscScanLogTransaction(bscScanTransactionLog, bscScanTransactionLogDTO.getTopics());
 
                 bscScanTransactionLogList.add(bscScanTransactionLog);
 

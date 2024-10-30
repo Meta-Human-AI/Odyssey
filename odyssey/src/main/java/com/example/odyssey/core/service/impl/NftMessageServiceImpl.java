@@ -46,6 +46,8 @@ public class NftMessageServiceImpl implements NftMessageService {
     CityMapper cityMapper;
     @Resource
     ContractAddressMapper contractAddressMapper;
+    @Resource
+    SystemConfigMapper systemConfigMapper;
 
     @Override
     public SingleResponse createNftMessage(NftMessageCreateCmd nftMessageCreateCmd) {
@@ -105,6 +107,10 @@ public class NftMessageServiceImpl implements NftMessageService {
         NftLevelDTO nftIdToLevel = web3jUtil.getNftIdToLevel(nftMessageQryCmd.getTokenId(), nftMessageQryCmd.getAddress());
         if (Objects.nonNull(nftIdToLevel)) {
 
+            QueryWrapper<SystemConfig> systemConfigQueryWrapper = new QueryWrapper<>();
+            systemConfigQueryWrapper.eq("key",nftIdToLevel.getLevel());
+            SystemConfig systemConfig = systemConfigMapper.selectOne(systemConfigQueryWrapper);
+
             nftMessage = new NftMessage();
             nftMessage.setTokenId(nftMessageQryCmd.getTokenId());
             nftMessage.setBlockadeTime(0L);
@@ -120,6 +126,11 @@ public class NftMessageServiceImpl implements NftMessageService {
                 nftMessage.setCity(0L);
                 nftMessage.setState(0L);
             }
+
+            if (Objects.nonNull(systemConfig)) {
+                nftMessage.setUrl(systemConfig.getValue());
+            }
+
             nftMessageMapper.insert(nftMessage);
 
             nftMessageDTO.setTokenId(nftMessageQryCmd.getTokenId());
