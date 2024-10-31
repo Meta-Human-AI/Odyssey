@@ -306,7 +306,13 @@ public class NftMessageServiceImpl implements NftMessageService {
         queryWrapper.eq("token_id", nftMessageMetadataQryCmd.getTokenId());
         NftMessage nftMessage = nftMessageMapper.selectOne(queryWrapper);
         if (Objects.isNull(nftMessage)) {
-            return SingleResponse.buildFailure("nft不存在");
+            NftMessageMetadataDTO nftMessageMetadataDTO = new NftMessageMetadataDTO();
+            nftMessageMetadataDTO.setName("");
+            nftMessageMetadataDTO.setTokenId(nftMessageMetadataQryCmd.getTokenId());
+            nftMessageMetadataDTO.setAttributes(new ArrayList<>());
+            nftMessageMetadataDTO.setImage("");
+            nftMessageMetadataDTO.setDescription("nft描述");
+            return SingleResponse.of(nftMessageMetadataDTO);
         }
 
         NftMessageMetadataDTO nftMessageMetadataDTO = new NftMessageMetadataDTO();
