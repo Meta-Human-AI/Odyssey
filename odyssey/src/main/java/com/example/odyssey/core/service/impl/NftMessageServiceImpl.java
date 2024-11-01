@@ -298,7 +298,7 @@ public class NftMessageServiceImpl implements NftMessageService {
             QueryWrapper<TransactionRecord> transactionRecordQueryWrapper = new QueryWrapper<>();
             transactionRecordQueryWrapper.eq("token_id", nftMessage.getTokenId());
             transactionRecordQueryWrapper.eq("wallet_address", nftMessage.getNewAddress());
-            transactionRecordQueryWrapper.in("action", Arrays.asList(ActionTypeEnum.BUY.getCode(), ActionTypeEnum.TRANSFER_IN.getCode()));
+            transactionRecordQueryWrapper.in("action", Arrays.asList(ActionTypeEnum.BUY.getCode(), ActionTypeEnum.TRANSFER_IN.getCode(),ActionTypeEnum.AIRDROP.getCode()));
             transactionRecordQueryWrapper.orderByDesc("time");
             transactionRecordQueryWrapper.last("limit 1");
 
