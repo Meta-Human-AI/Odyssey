@@ -27,6 +27,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Service
@@ -101,6 +102,12 @@ public class NftMessageServiceImpl implements NftMessageService {
                     nftMessage.setBuyAddress(nftMessageCreateDTO.getAddress());
                     nftMessageMapper.updateById(nftMessage);
                     break;
+                }
+
+                try {
+                    TimeUnit.SECONDS.sleep(1);
+                }catch (InterruptedException e){
+                    e.printStackTrace();
                 }
 
                 count++;

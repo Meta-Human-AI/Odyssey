@@ -251,6 +251,24 @@ public class TransactionRecordScheduled {
                 continue;
             }
 
+            NftMessageTransferCmd nftMessageTransferCmd = new NftMessageTransferCmd();
+            nftMessageTransferCmd.setTokenId(transactionRecord.getTokenId());
+
+            if (transactionRecord.getAction().equals(ActionTypeEnum.BUY.getCode())) {
+
+                nftMessageTransferCmd.setNewAddress(transactionRecord.getWalletAddress());
+                nftMessageTransferCmd.setBugTime(transactionRecord.getTime());
+                nftMessageTransferCmd.setBuyAddress(transactionRecord.getWalletAddress());
+                nftMessageTransferCmd.setOldAddress(transactionRecord.getWalletAddress());
+
+            }
+            if (transactionRecord.getAction().equals(ActionTypeEnum.AIRDROP.getCode())){
+                nftMessageTransferCmd.setNewAddress(transactionRecord.getWalletAddress());
+                nftMessageTransferCmd.setOldAddress(transactionRecord.getWalletAddress());
+            }
+
+            nftMessageService.transferNftMessage(nftMessageTransferCmd);
+
             transactionRecord.setType(nftMessage.getType());
             transactionRecordMapper.updateById(transactionRecord);
         }

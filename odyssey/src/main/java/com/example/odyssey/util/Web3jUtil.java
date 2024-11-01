@@ -88,11 +88,11 @@ public class Web3jUtil {
 
     public static void main(String[] args) throws IOException {
 
-        String address = "0x749d0467b583a4f1bcC74c019BaCd1879eC54669";
+        String address = "0x8e4B6Fb428f65c8aEF4EfEc73A081249Fbce4493";
 
         Web3j web3j = Web3j.build(new HttpService("https://bsc-testnet.infura.io/v3/4c223b9e87754809a5d8f819a261fdb7"));
 
-        List input = Arrays.asList(new Uint256(3));
+        List input = Arrays.asList(new Uint256(61));
 
         List output = Arrays.asList(new TypeReference<Uint256>() {
         }, new TypeReference<Uint256>() {
