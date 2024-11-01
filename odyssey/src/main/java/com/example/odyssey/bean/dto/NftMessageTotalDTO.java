@@ -30,6 +30,20 @@ public class NftMessageTotalDTO {
      * nft等级
      */
     private String type;
+
+    /**
+     * 州
+     */
+    private String state;
+    /**
+     * 城市
+     */
+    private String city;
+
+    /**
+     * 封锁时间
+     */
+    private Long blockadeTime;
     /**
      * 挖矿奖励
      */

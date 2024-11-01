@@ -6,10 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.odyssey.bean.MultiResponse;
 import com.example.odyssey.bean.SingleResponse;
 import com.example.odyssey.bean.cmd.*;
-import com.example.odyssey.bean.dto.NftLevelDTO;
-import com.example.odyssey.bean.dto.NftMessageDTO;
-import com.example.odyssey.bean.dto.NftMessageMetadataDTO;
-import com.example.odyssey.bean.dto.NftMessageTotalDTO;
+import com.example.odyssey.bean.dto.*;
 import com.example.odyssey.common.*;
 import com.example.odyssey.core.scheduled.TransferScheduled;
 import com.example.odyssey.core.service.NftMessageService;
@@ -24,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -282,6 +280,18 @@ public class NftMessageServiceImpl implements NftMessageService {
 
         List<NftMessageTotalDTO> nftMessageTotalDTOList = new ArrayList<>();
 
+        List<Long> cityIds = nftMessageList.stream().map(NftMessage::getCity).filter(city -> city > 0).collect(Collectors.toList());
+
+        Map<Long, String> cityMap = new HashMap<>();
+
+        if (!Collections.isEmpty(cityIds)) {
+            QueryWrapper<City> cityQueryWrapper = new QueryWrapper<>();
+            cityQueryWrapper.in("code", cityIds);
+            List<City> cities = cityMapper.selectList(cityQueryWrapper);
+
+            cityMap = cities.stream().collect(Collectors.toMap(City::getCode, City::getName));
+        }
+
         for (NftMessage nftMessage : nftMessageList) {
 
             //todo 获取最新一次买入或转入的时间
@@ -321,6 +331,16 @@ public class NftMessageServiceImpl implements NftMessageService {
             nftMessageTotalDTO.setType(nftMessage.getType());
             nftMessageTotalDTO.setRewardTotalNumber(rewardNumberTotal.toString());
             nftMessageTotalDTO.setUrl(nftMessage.getUrl());
+            nftMessageTotalDTO.setBlockadeTime(nftMessage.getBlockadeTime());
+
+            StateEnum stateEnum = StateEnum.of(nftMessage.getState());
+
+            if (Objects.nonNull(stateEnum)) {
+                nftMessageTotalDTO.setState(stateEnum.getName());
+            }
+            nftMessageTotalDTO.setCity(cityMap.get(nftMessage.getCity()));
+
+
             nftMessageTotalDTOList.add(nftMessageTotalDTO);
         }
         return MultiResponse.of(nftMessageTotalDTOList);
@@ -345,9 +365,40 @@ public class NftMessageServiceImpl implements NftMessageService {
         NftMessageMetadataDTO nftMessageMetadataDTO = new NftMessageMetadataDTO();
         nftMessageMetadataDTO.setName(nftMessage.getType());
         nftMessageMetadataDTO.setTokenId(nftMessage.getTokenId());
-        nftMessageMetadataDTO.setAttributes(new ArrayList<>());
         nftMessageMetadataDTO.setImage(nftMessage.getUrl());
         nftMessageMetadataDTO.setDescription("nft描述");
+
+        List<NftMessageMetadataDetailDTO> nftMessageMetadataDetailDTOList = new ArrayList<>();
+
+        StateEnum stateEnum = StateEnum.of(nftMessage.getState());
+        NftMessageMetadataDetailDTO state = new NftMessageMetadataDetailDTO();
+        state.setTrait_type("state");
+        if (Objects.nonNull(stateEnum)) {
+            state.setValue(stateEnum.getName());
+        }
+        nftMessageMetadataDetailDTOList.add(state);
+
+        City city = cityMapper.selectById(nftMessage.getCity());
+        NftMessageMetadataDetailDTO cityDetail = new NftMessageMetadataDetailDTO();
+        cityDetail.setTrait_type("country");
+        if (Objects.nonNull(city)) {
+            cityDetail.setValue(city.getName());
+        }
+        nftMessageMetadataDetailDTOList.add(cityDetail);
+
+        NftMessageMetadataDetailDTO blockadeTime = new NftMessageMetadataDetailDTO();
+        blockadeTime.setTrait_type("blockadeTime");
+        if (nftMessage.getBlockadeTime() > 0){
+            Date date = new Date(nftMessage.getBlockadeTime());
+            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            String time = simpleDateFormat.format(date);
+            blockadeTime.setValue(time);
+        }else {
+            blockadeTime.setValue("0");
+        }
+        nftMessageMetadataDetailDTOList.add(blockadeTime);
+        nftMessageMetadataDTO.setAttributes(nftMessageMetadataDetailDTOList);
+
         return SingleResponse.of(nftMessageMetadataDTO);
     }
 }

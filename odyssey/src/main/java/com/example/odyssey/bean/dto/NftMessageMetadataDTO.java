@@ -14,5 +14,5 @@ public class NftMessageMetadataDTO {
 
     private String image;
 
-    private List<String> attributes;
+    private List<NftMessageMetadataDetailDTO> attributes;
 }
