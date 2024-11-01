@@ -28,6 +28,7 @@ public class NftMessageController {
 
     @PostMapping("/buy")
     SingleResponse createNftMessage(@RequestBody NftMessageCreateCmd nftMessageCreateCmd) {
+        Assert.notNull(nftMessageCreateCmd.getData(), "购买信息不能为空");
         return nftMessageService.createNftMessage(nftMessageCreateCmd);
     }
 

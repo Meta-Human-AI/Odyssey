@@ -52,9 +52,24 @@ public class NftMessageServiceImpl implements NftMessageService {
     @Override
     public SingleResponse createNftMessage(NftMessageCreateCmd nftMessageCreateCmd) {
 
-        String data = new String(AESUtils.AESDecode(nftMessageCreateCmd.getData()));
+        String data = null;
+        try {
+            data = AESUtils.aesDecrypt(nftMessageCreateCmd.getData());
+        } catch (Exception e) {
+            return SingleResponse.buildFailure("购买信息解密失败");
+        }
 
         NftMessageCreateDTO nftMessageCreateDTO = JSONUtil.toBean(data, NftMessageCreateDTO.class);
+
+        if (Objects.isNull(nftMessageCreateDTO)) {
+            return SingleResponse.buildFailure("购买信息不能为空");
+        }
+        if (Objects.isNull(nftMessageCreateDTO.getTokenId())) {
+            return SingleResponse.buildFailure("tokenId不能为空");
+        }
+        if (Objects.isNull(nftMessageCreateDTO.getAddress())) {
+            return SingleResponse.buildFailure("地址不能为空");
+        }
 
         QueryWrapper<NftMessage> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("token_id", nftMessageCreateDTO.getTokenId());
@@ -73,7 +88,9 @@ public class NftMessageServiceImpl implements NftMessageService {
             nftMessageQryCmd.setTokenId(nftMessageCreateDTO.getTokenId());
             nftMessageQryCmd.setAddress(contractAddress.getAddress());
 
-            while (true){
+            Integer count = 0;
+
+            while (count < 10) {
 
                 NftMessageDTO nftMessageDTO = getNftMessage(nftMessageQryCmd).getData();
                 if (Objects.nonNull(nftMessageDTO.getId())) {
@@ -85,6 +102,8 @@ public class NftMessageServiceImpl implements NftMessageService {
                     nftMessageMapper.updateById(nftMessage);
                     break;
                 }
+
+                count++;
             }
         }
         return SingleResponse.buildSuccess();
@@ -108,7 +127,7 @@ public class NftMessageServiceImpl implements NftMessageService {
         if (Objects.nonNull(nftIdToLevel)) {
 
             QueryWrapper<SystemConfig> systemConfigQueryWrapper = new QueryWrapper<>();
-            systemConfigQueryWrapper.eq("`key`",nftIdToLevel.getLevel());
+            systemConfigQueryWrapper.eq("`key`", nftIdToLevel.getLevel());
             SystemConfig systemConfig = systemConfigMapper.selectOne(systemConfigQueryWrapper);
 
             nftMessage = new NftMessage();
@@ -264,6 +283,7 @@ public class NftMessageServiceImpl implements NftMessageService {
             transactionRecordQueryWrapper.eq("wallet_address", nftMessage.getNewAddress());
             transactionRecordQueryWrapper.in("action", Arrays.asList(ActionTypeEnum.BUY.getCode(), ActionTypeEnum.TRANSFER_IN.getCode()));
             transactionRecordQueryWrapper.orderByDesc("time");
+            transactionRecordQueryWrapper.last("limit 1");
 
             TransactionRecord transactionRecord = transactionRecordMapper.selectOne(transactionRecordQueryWrapper);
             if (Objects.isNull(transactionRecord)) {

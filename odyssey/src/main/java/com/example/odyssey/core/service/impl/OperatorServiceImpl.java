@@ -44,8 +44,12 @@ public class OperatorServiceImpl implements OperatorService {
         if (count > 0) {
             return SingleResponse.buildFailure("用户名已存在");
         }
-
-        String password = new String(AESUtils.AESDecode(operatorCreateCmd.getPassword()));
+        String password = null;
+        try {
+            password = AESUtils.aesDecrypt(operatorCreateCmd.getPassword());
+        } catch (Exception e) {
+            return SingleResponse.buildFailure("密码解密失败");
+        }
         Operator operator = new Operator();
         operator.setUsername(operatorCreateCmd.getUsername());
         operator.setPassword(DigestUtils.sha1Hex(password));
@@ -63,12 +67,25 @@ public class OperatorServiceImpl implements OperatorService {
             return SingleResponse.buildFailure("用户不存在");
         }
 
-        String oldPassword = new String(AESUtils.AESDecode(operatorChargePasswordCmd.getOldPassword()));
+        String oldPassword = null;
+        try {
+            oldPassword = AESUtils.aesDecrypt(operatorChargePasswordCmd.getOldPassword());
+        } catch (Exception e) {
+
+            return SingleResponse.buildFailure("旧密码解密失败");
+        }
+
         if (!(DigestUtils.sha1Hex(oldPassword).equals(operator.getPassword()))) {
             return SingleResponse.buildFailure("原密码错误");
         }
 
-        String newPassword = new String(AESUtils.AESDecode(operatorChargePasswordCmd.getNewPassword()));
+        String newPassword = null;
+        try {
+            newPassword = AESUtils.aesDecrypt(operatorChargePasswordCmd.getNewPassword());
+        } catch (Exception e) {
+            return SingleResponse.buildFailure("新密码解密失败");
+        }
+
         operator.setPassword(DigestUtils.sha1Hex(newPassword));
 
         operatorMapper.updateById(operator);
@@ -105,7 +122,13 @@ public class OperatorServiceImpl implements OperatorService {
             return SingleResponse.buildFailure("用户不存在");
         }
 
-        String password = new String(AESUtils.AESDecode(operatorLoginCmd.getPassword()));
+        String password = null;
+        try {
+            password = AESUtils.aesDecrypt(operatorLoginCmd.getPassword());
+        } catch (Exception e) {
+            return SingleResponse.buildFailure("密码解密失败");
+        }
+
         if (!(DigestUtils.sha1Hex(password).equals(operator.getPassword()))) {
             return SingleResponse.buildFailure("密码错误");
         }

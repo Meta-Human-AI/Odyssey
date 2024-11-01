@@ -26,6 +26,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
 import java.util.*;
@@ -324,7 +325,19 @@ public class BscScanTransactionScheduled {
                 break;
             }
 
-            BscScanTransactionLogResponseDTO bscScanTransactionLogResponseDTO = JSONUtil.toBean(response, BscScanTransactionLogResponseDTO.class);
+            if (!StringUtils.hasLength(response)) {
+                log.error("response error:{}", response);
+                break;
+            }
+
+            BscScanTransactionLogResponseDTO bscScanTransactionLogResponseDTO = null;
+            try {
+                bscScanTransactionLogResponseDTO = JSONUtil.toBean(response, BscScanTransactionLogResponseDTO.class);
+            } catch (Exception e) {
+                e.printStackTrace();
+                log.error("BscScanTransactionLogResponseDTO toBean error:{}", response);
+                break;
+            }
 
             if (bscScanTransactionLogResponseDTO.getStatus().equals("0")) {
                 log.error("BscScanTransactionLogResponseDTO error:{}", bscScanTransactionLogResponseDTO.getMessage());

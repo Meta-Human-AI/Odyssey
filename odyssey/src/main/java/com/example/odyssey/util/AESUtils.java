@@ -175,16 +175,16 @@ public class AESUtils {
 
     public static void main(String[] args) throws Exception {
         //原文
-        String context = "odysses@2024";
-        //压缩为字节数组
-        byte[] compress = context.getBytes();
-        //加密后
-        String aesCode = AESEncode(compress);
-        String str = "HsSyvSqrSwuwe34npv1N7A==";
+//        String context = "odysses@2024";
+//        //压缩为字节数组
+//        byte[] compress = context.getBytes();
+//        //加密后
+//        String aesCode = AESEncode(compress);
+        String str = "U95IpHcEmlwpl0ZNZa6P09MY2vdsh1jqjBbg/jwB+WlPzF8IFya8kkHHRfRurTkwdHVuQSS3uvggh3ICgN1DunbNQQ9VoMAhjqaf4PON1SI=";
         //str = str.replace(" ", "+");
-        System.out.println("加密后：" + aesCode);
+//        System.out.println("加密后：" + aesCode);
         //解密
-        String aesdecode = new String(AESDecode(str));
+        String aesdecode = aesDecrypt(str);
 //        String outputStr = AESDecode(str);
         System.out.println("解密后：" + aesdecode);
 

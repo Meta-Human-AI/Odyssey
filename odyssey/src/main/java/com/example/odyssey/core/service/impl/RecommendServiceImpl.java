@@ -93,7 +93,7 @@ public class RecommendServiceImpl implements RecommendService {
 
                 QueryWrapper<SystemConfig> systemQueryWrapper = new QueryWrapper<>();
 
-                systemQueryWrapper.eq("`key`", "ods_url");
+                systemQueryWrapper.eq("`key`", "url");
 
                 SystemConfig systemConfig = systemConfigMapper.selectOne(systemQueryWrapper);
 
