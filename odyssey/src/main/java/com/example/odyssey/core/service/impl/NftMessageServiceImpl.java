@@ -294,6 +294,20 @@ public class NftMessageServiceImpl implements NftMessageService {
 
         for (NftMessage nftMessage : nftMessageList) {
 
+            NftMessageTotalDTO nftMessageTotalDTO = new NftMessageTotalDTO();
+            nftMessageTotalDTO.setTokenId(nftMessage.getTokenId());
+            nftMessageTotalDTO.setAddress(nftMessage.getNewAddress());
+            nftMessageTotalDTO.setType(nftMessage.getType());
+            nftMessageTotalDTO.setUrl(nftMessage.getUrl());
+            nftMessageTotalDTO.setBlockadeTime(nftMessage.getBlockadeTime());
+
+            StateEnum stateEnum = StateEnum.of(nftMessage.getState());
+
+            if (Objects.nonNull(stateEnum)) {
+                nftMessageTotalDTO.setState(stateEnum.getName());
+            }
+            nftMessageTotalDTO.setCity(cityMap.get(nftMessage.getCity()));
+
             //todo 获取最新一次买入或转入的时间
             QueryWrapper<TransactionRecord> transactionRecordQueryWrapper = new QueryWrapper<>();
             transactionRecordQueryWrapper.eq("token_id", nftMessage.getTokenId());
@@ -304,41 +318,34 @@ public class NftMessageServiceImpl implements NftMessageService {
 
             TransactionRecord transactionRecord = transactionRecordMapper.selectOne(transactionRecordQueryWrapper);
             if (Objects.isNull(transactionRecord)) {
-                continue;
+                nftMessageTotalDTO.setTime("");
+                nftMessageTotalDTO.setDay(0);
+                nftMessageTotalDTO.setRewardTotalNumber("0");
+            }else {
+                nftMessageTotalDTO.setTime(transactionRecord.getTime());
+
+                QueryWrapper<RewardDistributionRecord> rewardDistributionRecordQueryWrapper = new QueryWrapper<>();
+                rewardDistributionRecordQueryWrapper.eq("token_id", nftMessage.getTokenId());
+                rewardDistributionRecordQueryWrapper.eq("wallet_address", nftMessage.getNewAddress());
+                rewardDistributionRecordQueryWrapper.eq("reward_type", RebateEnum.ODS.getCode());
+                rewardDistributionRecordQueryWrapper.ge("create_time", transactionRecord.getTime());
+                rewardDistributionRecordQueryWrapper.eq("reward_status", RewardDistributionStatusEnum.ISSUED.getCode());
+
+
+                List<RewardDistributionRecord> rewardDistributionRecordList = rewardDistributionRecordMapper.selectList(rewardDistributionRecordQueryWrapper);
+
+
+                nftMessageTotalDTO.setDay(rewardDistributionRecordList.size());
+
+                BigDecimal rewardNumberTotal = rewardDistributionRecordList.stream()
+                        .map(RewardDistributionRecord::getRewardNumber)
+                        .map(BigDecimal::new)
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                nftMessageTotalDTO.setRewardTotalNumber(rewardNumberTotal.toString());
             }
 
 
-            QueryWrapper<RewardDistributionRecord> rewardDistributionRecordQueryWrapper = new QueryWrapper<>();
-            rewardDistributionRecordQueryWrapper.eq("token_id", nftMessage.getTokenId());
-            rewardDistributionRecordQueryWrapper.eq("wallet_address", nftMessage.getNewAddress());
-            rewardDistributionRecordQueryWrapper.eq("reward_type", RebateEnum.ODS.getCode());
-            rewardDistributionRecordQueryWrapper.ge("create_time", transactionRecord.getTime());
-            rewardDistributionRecordQueryWrapper.eq("reward_status", RewardDistributionStatusEnum.ISSUED.getCode());
-
-
-            List<RewardDistributionRecord> rewardDistributionRecordList = rewardDistributionRecordMapper.selectList(rewardDistributionRecordQueryWrapper);
-
-            BigDecimal rewardNumberTotal = rewardDistributionRecordList.stream()
-                    .map(RewardDistributionRecord::getRewardNumber)
-                    .map(BigDecimal::new)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-            NftMessageTotalDTO nftMessageTotalDTO = new NftMessageTotalDTO();
-            nftMessageTotalDTO.setTokenId(nftMessage.getTokenId());
-            nftMessageTotalDTO.setTime(transactionRecord.getTime());
-            nftMessageTotalDTO.setAddress(nftMessage.getNewAddress());
-            nftMessageTotalDTO.setDay(rewardDistributionRecordList.size());
-            nftMessageTotalDTO.setType(nftMessage.getType());
-            nftMessageTotalDTO.setRewardTotalNumber(rewardNumberTotal.toString());
-            nftMessageTotalDTO.setUrl(nftMessage.getUrl());
-            nftMessageTotalDTO.setBlockadeTime(nftMessage.getBlockadeTime());
-
-            StateEnum stateEnum = StateEnum.of(nftMessage.getState());
-
-            if (Objects.nonNull(stateEnum)) {
-                nftMessageTotalDTO.setState(stateEnum.getName());
-            }
-            nftMessageTotalDTO.setCity(cityMap.get(nftMessage.getCity()));
 
 
             nftMessageTotalDTOList.add(nftMessageTotalDTO);

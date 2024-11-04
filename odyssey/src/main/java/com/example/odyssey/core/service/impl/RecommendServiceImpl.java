@@ -60,6 +60,16 @@ public class RecommendServiceImpl implements RecommendService {
 
                 RecommendCoreDTO recommendCoreDTO = new RecommendCoreDTO();
 
+                QueryWrapper<Recommend> recommendQueryWrapper = new QueryWrapper<>();
+                recommendQueryWrapper.eq("wallet_address",recommendCoreCreateCmd.getWalletAddress());
+                Recommend recommend = recommendMapper.selectOne(recommendQueryWrapper);
+
+                if (Objects.nonNull(recommend)){
+                    recommendCoreDTO.setRecommendWalletAddress(recommend.getRecommendWalletAddress());
+                }else {
+                    recommendCoreDTO.setRecommendWalletAddress("");
+                }
+
                 QueryWrapper<RecommendCoreLog> recommendCoreLogQueryWrapper = new QueryWrapper<>();
                 recommendCoreLogQueryWrapper.eq("wallet_address", recommendCoreCreateCmd.getWalletAddress());
                 RecommendCoreLog recommendCoreLog = recommendCoreLogMapper.selectOne(recommendCoreLogQueryWrapper);
@@ -104,6 +114,7 @@ public class RecommendServiceImpl implements RecommendService {
                 recommendCoreDTO.setRecommendUrl(systemConfig.getValue() + "/odyssey/v1/recommend/add?core=" + randomAlphabetic);
 
                 recommendCoreDTO.setRecommendCore(randomAlphabetic);
+
                 return SingleResponse.of(recommendCoreDTO);
 
             }

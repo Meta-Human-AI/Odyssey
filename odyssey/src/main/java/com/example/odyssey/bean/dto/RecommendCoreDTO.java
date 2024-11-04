@@ -12,4 +12,7 @@ public class RecommendCoreDTO {
      * 推荐链接
      */
     private String recommendUrl;
+
+
+    private String recommendWalletAddress;
 }
