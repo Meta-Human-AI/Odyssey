@@ -228,7 +228,9 @@ public class RecommendServiceImpl implements RecommendService {
             queryWrapper.eq("wallet_address", recommendListQryCmd.getWalletAddress());
             Recommend recommend = recommendMapper.selectOne(queryWrapper);
 
-            Assert.notNull(recommend, "钱包未注册");
+            if (Objects.isNull(recommend)) {
+                return MultiResponse.of(Collections.emptyList());
+            }
             recommends.add(recommend);
         }
 

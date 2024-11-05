@@ -385,7 +385,10 @@ public class NftMessageServiceImpl implements NftMessageService {
         }
         nftMessageMetadataDetailDTOList.add(state);
 
-        City city = cityMapper.selectById(nftMessage.getCity());
+        QueryWrapper<City> cityQueryWrapper = new QueryWrapper<>();
+        cityQueryWrapper.eq("code", nftMessage.getCity());
+        City city = cityMapper.selectOne(cityQueryWrapper);
+
         NftMessageMetadataDetailDTO cityDetail = new NftMessageMetadataDetailDTO();
         cityDetail.setTrait_type("country");
         if (Objects.nonNull(city)) {
