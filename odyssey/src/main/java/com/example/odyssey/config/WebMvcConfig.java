@@ -15,13 +15,13 @@ public class WebMvcConfig implements WebMvcConfigurer {
     @Resource
     AuthInterceptor authInterceptor;
 
-    @Override
-    public void addInterceptors(InterceptorRegistry registry) {
-
-        registry.addInterceptor(authInterceptor)
-                // 拦截的路径
-                .addPathPatterns("/v1/admin/**");
-    }
+//    @Override
+//    public void addInterceptors(InterceptorRegistry registry) {
+//
+//        registry.addInterceptor(authInterceptor)
+//                // 拦截的路径
+//                .addPathPatterns("/v1/admin/**");
+//    }
     @Override
     public void addCorsMappings(CorsRegistry registry) {
 
