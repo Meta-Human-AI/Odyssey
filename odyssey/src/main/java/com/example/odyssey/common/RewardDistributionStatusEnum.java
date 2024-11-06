@@ -7,6 +7,7 @@ public enum RewardDistributionStatusEnum {
 
     UNISSUED("unissued", "未发放"),
 
+    PROGRESS("progress", "发放中"),
     ISSUED("issued", "已发放");
 
     private String code;

@@ -49,7 +49,9 @@ public class AdminRewardDistributionController {
      */
     @PostMapping("/issued")
     public SingleResponse issuedRewardDistribution(@RequestBody RewardDistributionIssuedCmd rewardDistributionIssuedCmd) {
-        Assert.notNull(rewardDistributionIssuedCmd.getId(), "奖励分配ID不能为空");
+
+        Assert.notNull(rewardDistributionIssuedCmd.getStatus(), "奖励状态不能为空");
+
         return rewardDistributionService.issuedRewardDistribution(rewardDistributionIssuedCmd);
     }
 

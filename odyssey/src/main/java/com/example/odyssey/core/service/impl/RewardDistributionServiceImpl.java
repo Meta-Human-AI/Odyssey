@@ -21,6 +21,7 @@ import com.example.odyssey.model.mapper.RewardDistributionRecordMapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
@@ -80,18 +81,29 @@ public class RewardDistributionServiceImpl implements RewardDistributionService 
 
         //todo 是运维人员自己发放吗
 
-        RewardDistributionRecord rewardDistributionRecord = rewardDistributionRecordMapper.selectById(rewardDistributionIssuedCmd.getId());
-
-        if (Objects.isNull(rewardDistributionRecord)) {
-            return SingleResponse.buildFailure("奖励分配记录不存在");
+        QueryWrapper<RewardDistributionRecord> queryWrapper = new QueryWrapper<>();
+        if (Objects.nonNull(rewardDistributionIssuedCmd.getId())) {
+            queryWrapper.eq("id", rewardDistributionIssuedCmd.getId());
         }
 
-        if (RewardDistributionStatusEnum.ISSUED.getCode().equals(rewardDistributionRecord.getRewardStatus())) {
-            return SingleResponse.buildFailure("奖励已发放");
+        if (!CollectionUtils.isEmpty(rewardDistributionIssuedCmd.getIds())) {
+            queryWrapper.in("id", rewardDistributionIssuedCmd.getIds());
         }
 
-        rewardDistributionRecord.setRewardStatus(RewardDistributionStatusEnum.ISSUED.getCode());
-        rewardDistributionRecordMapper.updateById(rewardDistributionRecord);
+        List<RewardDistributionRecord> rewardDistributionRecordList = rewardDistributionRecordMapper.selectList(queryWrapper);
+
+        if (CollectionUtils.isEmpty(rewardDistributionRecordList)) {
+            return SingleResponse.buildSuccess();
+        }
+
+        for (RewardDistributionRecord rewardDistributionRecord : rewardDistributionRecordList) {
+            if (RewardDistributionStatusEnum.ISSUED.getCode().equals(rewardDistributionRecord.getRewardStatus())) {
+                continue;
+            }
+
+            rewardDistributionRecord.setRewardStatus(rewardDistributionIssuedCmd.getStatus());
+            rewardDistributionRecordMapper.updateById(rewardDistributionRecord);
+        }
         return SingleResponse.buildSuccess();
     }
 

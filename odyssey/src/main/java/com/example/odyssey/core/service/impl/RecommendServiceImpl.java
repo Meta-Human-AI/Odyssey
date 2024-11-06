@@ -10,11 +10,14 @@ import com.example.odyssey.bean.cmd.RecommendLeaderCreateCmd;
 import com.example.odyssey.bean.cmd.RecommendListQryCmd;
 import com.example.odyssey.bean.dto.RecommendCoreDTO;
 import com.example.odyssey.bean.dto.RecommendListDTO;
+import com.example.odyssey.common.RebateEnum;
 import com.example.odyssey.common.RecommendEnum;
 import com.example.odyssey.core.service.RecommendService;
+import com.example.odyssey.model.entity.RebateConfig;
 import com.example.odyssey.model.entity.Recommend;
 import com.example.odyssey.model.entity.RecommendCoreLog;
 import com.example.odyssey.model.entity.SystemConfig;
+import com.example.odyssey.model.mapper.RebateConfigMapper;
 import com.example.odyssey.model.mapper.RecommendCoreLogMapper;
 import com.example.odyssey.model.mapper.RecommendMapper;
 import com.example.odyssey.model.mapper.SystemConfigMapper;
@@ -40,7 +43,7 @@ public class RecommendServiceImpl implements RecommendService {
     @Resource
     RedissonClient redissonClient;
     @Resource
-    RedisTemplate redisTemplate;
+    RebateConfigMapper rebateConfigMapper;
     @Resource
     RecommendCoreLogMapper recommendCoreLogMapper;
     @Resource
@@ -67,6 +70,51 @@ public class RecommendServiceImpl implements RecommendService {
                 if (Objects.nonNull(recommend)){
                     recommendCoreDTO.setRecommendWalletAddress(recommend.getRecommendWalletAddress());
                 }else {
+
+                    recommend = new Recommend();
+                    recommend.setWalletAddress(recommendCoreCreateCmd.getWalletAddress());
+                    recommend.setCreateTime(System.currentTimeMillis());
+                    recommend.setRecommendType(RecommendEnum.NORMAL.getCode());
+                    recommend.setLeaderWalletAddress(recommendCoreCreateCmd.getWalletAddress());
+                    recommendMapper.insert(recommend);
+
+                    QueryWrapper<SystemConfig> odsFirstRebateRateWrapper = new QueryWrapper<>();
+                    odsFirstRebateRateWrapper.eq("`key`", "ods_first_rebate_rate");
+
+                    SystemConfig odsFirstRebateRate = systemConfigMapper.selectOne(odsFirstRebateRateWrapper);
+
+                    QueryWrapper<SystemConfig> odsSecondRebateRateWrapper = new QueryWrapper<>();
+                    odsSecondRebateRateWrapper.eq("`key`", "ods_second_rebate_rate");
+
+                    SystemConfig odsSecondRebateRate = systemConfigMapper.selectOne(odsSecondRebateRateWrapper);
+
+                    QueryWrapper<SystemConfig> usdtFirstRebateRateWrapper = new QueryWrapper<>();
+                    usdtFirstRebateRateWrapper.eq("`key`", "usdt_first_rebate_rate");
+
+                    SystemConfig usdtFirstRebateRate = systemConfigMapper.selectOne(usdtFirstRebateRateWrapper);
+
+                    QueryWrapper<SystemConfig> usdtSecondRebateRateWrapper = new QueryWrapper<>();
+                    usdtSecondRebateRateWrapper.eq("`key`", "usdt_second_rebate_rate");
+
+                    SystemConfig usdtSecondRebateRate = systemConfigMapper.selectOne(usdtSecondRebateRateWrapper);
+
+                    RebateConfig odRebateConfig = new RebateConfig();
+                    odRebateConfig.setAddress(recommendCoreCreateCmd.getWalletAddress());
+                    odRebateConfig.setFirstRebateRate(Objects.isNull(odsFirstRebateRate) ? "0.1" : odsFirstRebateRate.getValue());
+                    odRebateConfig.setSecondRebateRate(Objects.isNull(odsSecondRebateRate) ? "0.05" : odsSecondRebateRate.getValue());
+                    odRebateConfig.setRecommendType(RecommendEnum.NORMAL.getCode());
+                    odRebateConfig.setRebateType(RebateEnum.ODS.getCode());
+
+                    RebateConfig usdtRebateConfig = new RebateConfig();
+                    usdtRebateConfig.setAddress(recommendCoreCreateCmd.getWalletAddress());
+                    usdtRebateConfig.setFirstRebateRate(Objects.isNull(usdtFirstRebateRate) ? "0.1" : usdtFirstRebateRate.getValue());
+                    usdtRebateConfig.setSecondRebateRate(Objects.isNull(usdtSecondRebateRate) ? "0.05" : usdtSecondRebateRate.getValue());
+                    usdtRebateConfig.setRecommendType(RecommendEnum.NORMAL.getCode());
+                    usdtRebateConfig.setRebateType(RebateEnum.USDT.getCode());
+
+                    rebateConfigMapper.insert(odRebateConfig);
+                    rebateConfigMapper.insert(usdtRebateConfig);
+
                     recommendCoreDTO.setRecommendWalletAddress("");
                 }
 
@@ -179,7 +227,7 @@ public class RecommendServiceImpl implements RecommendService {
                     newRecommend.setFirstRecommendWalletAddress(recommend.getFirstRecommendWalletAddress());
                     newRecommend.setSecondRecommendWalletAddress(recommend.getWalletAddress());
                 }
-                newRecommend.setRecommendType(RecommendEnum.LEADER.getCode());
+                newRecommend.setRecommendType(Objects.isNull(recommend.getRecommendType()) ? RecommendEnum.LEADER.getCode() : recommend.getRecommendType());
             } else {
                 newRecommend.setRecommendType(RecommendEnum.NORMAL.getCode());
                 newRecommend.setSecondRecommendWalletAddress(recommend.getWalletAddress());
@@ -208,6 +256,7 @@ public class RecommendServiceImpl implements RecommendService {
         Recommend recommend = new Recommend();
         recommend.setLeaderWalletAddress(recommendLeaderCreateCmd.getWalletAddress());
         recommend.setWalletAddress(recommendLeaderCreateCmd.getWalletAddress());
+        recommend.setRecommendType(RecommendEnum.LEADER.getCode());
         recommend.setCreateTime(System.currentTimeMillis());
 
         recommendMapper.insert(recommend);
@@ -218,14 +267,22 @@ public class RecommendServiceImpl implements RecommendService {
     public MultiResponse<RecommendListDTO> getRecommendList(RecommendListQryCmd recommendListQryCmd) {
 
         List<Recommend> recommends = new ArrayList<>();
+
+        QueryWrapper<Recommend> queryWrapper = new QueryWrapper<>();
+
+        if (Objects.nonNull(recommendListQryCmd.getRecommendType())) {
+            queryWrapper.eq("recommend_type", recommendListQryCmd.getRecommendType());
+        }
+
         if (Objects.isNull(recommendListQryCmd.getWalletAddress())) {
-            QueryWrapper<Recommend> queryWrapper = new QueryWrapper<>();
             queryWrapper.isNull("first_recommend_wallet_address");
+
             recommends = recommendMapper.selectList(queryWrapper);
 
         } else {
-            QueryWrapper<Recommend> queryWrapper = new QueryWrapper<>();
+
             queryWrapper.eq("wallet_address", recommendListQryCmd.getWalletAddress());
+
             Recommend recommend = recommendMapper.selectOne(queryWrapper);
 
             if (Objects.isNull(recommend)) {

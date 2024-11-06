@@ -6,4 +6,6 @@ import lombok.Data;
 public class RecommendListQryCmd {
 
     private String walletAddress;
+
+    private String recommendType;
 }
