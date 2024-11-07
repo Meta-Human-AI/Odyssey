@@ -8,6 +8,7 @@ import com.example.odyssey.bean.SingleResponse;
 import com.example.odyssey.bean.cmd.*;
 import com.example.odyssey.bean.dto.*;
 import com.example.odyssey.common.*;
+import com.example.odyssey.core.scheduled.RewardDistributionScheduled;
 import com.example.odyssey.core.scheduled.TransferScheduled;
 import com.example.odyssey.core.service.NftMessageService;
 import com.example.odyssey.model.entity.*;
@@ -47,6 +48,8 @@ public class NftMessageServiceImpl implements NftMessageService {
     ContractAddressMapper contractAddressMapper;
     @Resource
     SystemConfigMapper systemConfigMapper;
+    @Resource
+    RewardDistributionScheduled rewardDistributionScheduled;
 
     @Override
     public SingleResponse createNftMessage(NftMessageCreateCmd nftMessageCreateCmd) {
@@ -110,7 +113,12 @@ public class NftMessageServiceImpl implements NftMessageService {
 
                 count++;
             }
+
+
         }
+
+        rewardDistributionScheduled.usdtRewardDistribution();
+
         return SingleResponse.buildSuccess();
     }
 
@@ -160,6 +168,7 @@ public class NftMessageServiceImpl implements NftMessageService {
             nftMessageDTO.setTokenId(nftMessageQryCmd.getTokenId());
             nftMessageDTO.setType(nftIdToLevel.getLevel());
             nftMessageDTO.setId(nftMessage.getId());
+
             return SingleResponse.of(nftMessageDTO);
         }
 
@@ -193,6 +202,10 @@ public class NftMessageServiceImpl implements NftMessageService {
 
         if (Objects.nonNull(nftMessageTransferCmd.getBuyAddress())) {
             nftMessage.setBuyAddress(nftMessageTransferCmd.getBuyAddress());
+        }
+
+        if (Objects.nonNull(nftMessageTransferCmd.getTransferTime())){
+            nftMessage.setTransferTime(nftMessageTransferCmd.getTransferTime());
         }
 
         nftMessageMapper.updateById(nftMessage);

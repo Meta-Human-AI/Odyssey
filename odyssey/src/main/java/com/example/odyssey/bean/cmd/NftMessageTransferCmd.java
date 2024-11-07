@@ -20,5 +20,10 @@ public class NftMessageTransferCmd {
 
     private String bugTime;
 
+    /**
+     * 转入时间
+     */
+    private String transferTime;
+
     private Long tokenId;
 }

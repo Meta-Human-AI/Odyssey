@@ -52,6 +52,10 @@ public class NftMessage {
      */
     private String buyAddress;
     /**
+     * 转入时间
+     */
+    private String transferTime;
+    /**
      * 购买时间
      */
     private String buyTime;

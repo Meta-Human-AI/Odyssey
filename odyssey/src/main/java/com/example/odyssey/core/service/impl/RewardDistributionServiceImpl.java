@@ -25,6 +25,7 @@ import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -123,27 +124,27 @@ public class RewardDistributionServiceImpl implements RewardDistributionService 
                 .filter(rewardDistributionRecord -> RebateEnum.ODS.getCode().equals(rewardDistributionRecord.getRewardType()))
                 .map(RewardDistributionRecord::getRewardNumber)
                 .map(BigDecimal::new)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+                .reduce(BigDecimal.ZERO, BigDecimal::add).setScale(2, RoundingMode.DOWN);
 
         BigDecimal usdtTotalNumber = rewardDistributionRecordList.stream()
                 .filter(rewardDistributionRecord -> RebateEnum.USDT.getCode().equals(rewardDistributionRecord.getRewardType()))
                 .map(RewardDistributionRecord::getRewardNumber)
                 .map(BigDecimal::new)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+                .reduce(BigDecimal.ZERO, BigDecimal::add).setScale(2, RoundingMode.DOWN);
 
         BigDecimal odsIssuedNumber = rewardDistributionRecordList.stream()
                 .filter(rewardDistributionRecord -> RebateEnum.ODS.getCode().equals(rewardDistributionRecord.getRewardType()))
                 .filter(rewardDistributionRecord -> RewardDistributionStatusEnum.ISSUED.getCode().equals(rewardDistributionRecord.getRewardStatus()))
                 .map(RewardDistributionRecord::getRewardNumber)
                 .map(BigDecimal::new)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+                .reduce(BigDecimal.ZERO, BigDecimal::add).setScale(2, RoundingMode.DOWN);
 
         BigDecimal usdtIssuedNumber = rewardDistributionRecordList.stream()
                 .filter(rewardDistributionRecord -> RebateEnum.USDT.getCode().equals(rewardDistributionRecord.getRewardType()))
                 .filter(rewardDistributionRecord -> RewardDistributionStatusEnum.ISSUED.getCode().equals(rewardDistributionRecord.getRewardStatus()))
                 .map(RewardDistributionRecord::getRewardNumber)
                 .map(BigDecimal::new)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+                .reduce(BigDecimal.ZERO, BigDecimal::add).setScale(2, RoundingMode.DOWN);
 
         RewardDistributionTotalDTO odsRewardDistributionTotalDTO = new RewardDistributionTotalDTO();
         odsRewardDistributionTotalDTO.setRewardType(RebateEnum.ODS.getCode());

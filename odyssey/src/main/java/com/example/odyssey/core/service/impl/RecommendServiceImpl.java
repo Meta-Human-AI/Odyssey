@@ -56,7 +56,7 @@ public class RecommendServiceImpl implements RecommendService {
     public SingleResponse<RecommendCoreDTO> getRecommendCore(RecommendCoreCreateCmd recommendCoreCreateCmd) {
 
 
-        RLock redLock = redissonClient.getLock("odyssey:recommend:core:" + recommendCoreCreateCmd.getWalletAddress());
+        RLock redLock = redissonClient.getLock("odyssey:recommend:" + recommendCoreCreateCmd.getWalletAddress());
 
         try {
             if (redLock.tryLock(5 * 1000, TimeUnit.MILLISECONDS)) {
@@ -100,15 +100,15 @@ public class RecommendServiceImpl implements RecommendService {
 
                     RebateConfig odRebateConfig = new RebateConfig();
                     odRebateConfig.setAddress(recommendCoreCreateCmd.getWalletAddress());
-                    odRebateConfig.setFirstRebateRate(Objects.isNull(odsFirstRebateRate) ? "0.1" : odsFirstRebateRate.getValue());
-                    odRebateConfig.setSecondRebateRate(Objects.isNull(odsSecondRebateRate) ? "0.05" : odsSecondRebateRate.getValue());
+                    odRebateConfig.setFirstRebateRate(Objects.isNull(odsFirstRebateRate) ? "0.02" : odsFirstRebateRate.getValue());
+                    odRebateConfig.setSecondRebateRate(Objects.isNull(odsSecondRebateRate) ? "0.1" : odsSecondRebateRate.getValue());
                     odRebateConfig.setRecommendType(RecommendEnum.NORMAL.getCode());
                     odRebateConfig.setRebateType(RebateEnum.ODS.getCode());
 
                     RebateConfig usdtRebateConfig = new RebateConfig();
                     usdtRebateConfig.setAddress(recommendCoreCreateCmd.getWalletAddress());
-                    usdtRebateConfig.setFirstRebateRate(Objects.isNull(usdtFirstRebateRate) ? "0.1" : usdtFirstRebateRate.getValue());
-                    usdtRebateConfig.setSecondRebateRate(Objects.isNull(usdtSecondRebateRate) ? "0.05" : usdtSecondRebateRate.getValue());
+                    usdtRebateConfig.setFirstRebateRate(Objects.isNull(usdtFirstRebateRate) ? "0.02" : usdtFirstRebateRate.getValue());
+                    usdtRebateConfig.setSecondRebateRate(Objects.isNull(usdtSecondRebateRate) ? "0.1" : usdtSecondRebateRate.getValue());
                     usdtRebateConfig.setRecommendType(RecommendEnum.NORMAL.getCode());
                     usdtRebateConfig.setRebateType(RebateEnum.USDT.getCode());
 
@@ -181,66 +181,94 @@ public class RecommendServiceImpl implements RecommendService {
     @Override
     public SingleResponse recommend(RecommendCreateCmd recommendCreateCmd) {
 
+        RLock redLock = redissonClient.getLock("odyssey:recommend:" + recommendCreateCmd.getWalletAddress());
+
+
         try {
             //推荐人
 //            Object recommendWalletAddress = redisTemplate.opsForValue().get(recommendCreateCmd.getRecommendCore());
 //            if (Objects.isNull(recommendWalletAddress)) {
 //                return SingleResponse.buildFailure("推荐码不存在或已过期");
 //            }
+            if (redLock.tryLock(5 * 1000, TimeUnit.MILLISECONDS)) {
 
-            QueryWrapper<RecommendCoreLog> recommendCoreLogQueryWrapper = new QueryWrapper<>();
-            recommendCoreLogQueryWrapper.eq("recommend_core", recommendCreateCmd.getRecommendCore());
-            RecommendCoreLog recommendCoreLog = recommendCoreLogMapper.selectOne(recommendCoreLogQueryWrapper);
+                QueryWrapper<RecommendCoreLog> recommendCoreLogQueryWrapper = new QueryWrapper<>();
+                recommendCoreLogQueryWrapper.eq("recommend_core", recommendCreateCmd.getRecommendCore());
+                RecommendCoreLog recommendCoreLog = recommendCoreLogMapper.selectOne(recommendCoreLogQueryWrapper);
 
-            if (Objects.isNull(recommendCoreLog)) {
-                return SingleResponse.buildFailure("推荐码不存在");
-            }
-
-            QueryWrapper<Recommend> queryWrapper = new QueryWrapper<>();
-            queryWrapper.eq("wallet_address", recommendCreateCmd.getWalletAddress());
-            Long count = recommendMapper.selectCount(queryWrapper);
-
-            if (count > 0) {
-                return SingleResponse.buildFailure("已推荐过");
-            }
-
-            //查询推荐人的推荐关系
-            QueryWrapper<Recommend> recommendQueryWrapper = new QueryWrapper<>();
-            recommendQueryWrapper.eq("wallet_address", recommendCoreLog.getWalletAddress());
-            Recommend recommend = recommendMapper.selectOne(recommendQueryWrapper);
-
-            if (Objects.isNull(recommend)) {
-                return SingleResponse.buildFailure("推荐人不存在");
-            }
-
-            Recommend newRecommend = new Recommend();
-            newRecommend.setWalletAddress(recommendCreateCmd.getWalletAddress());
-            newRecommend.setRecommendWalletAddress(recommendCoreLog.getWalletAddress());
-            newRecommend.setRecommendCode(recommendCreateCmd.getRecommendCore());
-            newRecommend.setLeaderWalletAddress(recommend.getLeaderWalletAddress());
-
-
-            if (Objects.isNull(recommend.getFirstRecommendWalletAddress()) || Objects.isNull(recommend.getSecondRecommendWalletAddress())) {
-                if (Objects.isNull(recommend.getFirstRecommendWalletAddress())) {
-                    newRecommend.setFirstRecommendWalletAddress(recommend.getWalletAddress());
-                } else {
-                    newRecommend.setFirstRecommendWalletAddress(recommend.getFirstRecommendWalletAddress());
-                    newRecommend.setSecondRecommendWalletAddress(recommend.getWalletAddress());
+                if (Objects.isNull(recommendCoreLog)) {
+                    return SingleResponse.buildFailure("推荐码不存在");
                 }
-                newRecommend.setRecommendType(Objects.isNull(recommend.getRecommendType()) ? RecommendEnum.LEADER.getCode() : recommend.getRecommendType());
-            } else {
-                newRecommend.setRecommendType(RecommendEnum.NORMAL.getCode());
-                newRecommend.setSecondRecommendWalletAddress(recommend.getWalletAddress());
-                newRecommend.setFirstRecommendWalletAddress(recommend.getFirstRecommendWalletAddress());
-            }
-            newRecommend.setCreateTime(System.currentTimeMillis());
-            recommendMapper.insert(newRecommend);
 
-            return SingleResponse.buildSuccess();
+                QueryWrapper<Recommend> queryWrapper = new QueryWrapper<>();
+                queryWrapper.eq("wallet_address", recommendCreateCmd.getWalletAddress());
+                Recommend recommend = recommendMapper.selectOne(queryWrapper);
+
+                if (Objects.nonNull(recommend) && Objects.nonNull(recommend.getRecommendWalletAddress())) {
+                    return SingleResponse.buildFailure("已推荐过");
+                } else {
+                    //查询推荐人的推荐关系
+                    QueryWrapper<Recommend> recommendQueryWrapper = new QueryWrapper<>();
+                    recommendQueryWrapper.eq("wallet_address", recommendCoreLog.getWalletAddress());
+                    Recommend oldRecommend = recommendMapper.selectOne(recommendQueryWrapper);
+
+                    if (Objects.isNull(oldRecommend)) {
+                        return SingleResponse.buildFailure("推荐人不存在");
+                    }
+
+                    if (oldRecommend.getRecommendWalletAddress().equals(recommendCreateCmd.getWalletAddress())) {
+                        return SingleResponse.buildFailure("不能循环推荐");
+                    }
+
+                    if (Objects.isNull(recommend)) {
+                        recommend = new Recommend();
+                    }
+
+                    recommend.setWalletAddress(recommendCreateCmd.getWalletAddress());
+                    recommend.setRecommendWalletAddress(recommendCoreLog.getWalletAddress());
+                    recommend.setRecommendCode(recommendCreateCmd.getRecommendCore());
+                    recommend.setLeaderWalletAddress(oldRecommend.getLeaderWalletAddress());
+
+                    if (Objects.isNull(oldRecommend.getFirstRecommendWalletAddress()) || Objects.isNull(oldRecommend.getSecondRecommendWalletAddress())) {
+                        if (Objects.isNull(oldRecommend.getFirstRecommendWalletAddress())) {
+                            recommend.setFirstRecommendWalletAddress(oldRecommend.getWalletAddress());
+                        } else {
+                            recommend.setFirstRecommendWalletAddress(oldRecommend.getFirstRecommendWalletAddress());
+                            recommend.setSecondRecommendWalletAddress(oldRecommend.getWalletAddress());
+                        }
+                        recommend.setRecommendType(Objects.isNull(oldRecommend.getRecommendType()) ? RecommendEnum.LEADER.getCode() : oldRecommend.getRecommendType());
+                    } else {
+                        recommend.setRecommendType(RecommendEnum.NORMAL.getCode());
+                        recommend.setSecondRecommendWalletAddress(oldRecommend.getWalletAddress());
+                        recommend.setFirstRecommendWalletAddress(oldRecommend.getSecondRecommendWalletAddress());
+                    }
+
+                    recommend.setCreateTime(System.currentTimeMillis());
+
+                    if (Objects.isNull(recommend.getId())) {
+                        recommendMapper.insert(recommend);
+                    } else {
+                        recommendMapper.updateById(recommend);
+
+                        QueryWrapper<RebateConfig> rebateConfigQueryWrapper = new QueryWrapper<>();
+                        rebateConfigQueryWrapper.eq("address", recommend.getWalletAddress());
+
+                        rebateConfigMapper.delete(rebateConfigQueryWrapper);
+                    }
+                }
+
+
+                return SingleResponse.buildSuccess();
+            }
         } catch (Exception e) {
             e.printStackTrace();
             return SingleResponse.buildFailure("推荐失败");
+        }finally {
+            if (redLock.isHeldByCurrentThread()) {
+                redLock.unlock();
+            }
         }
+        return SingleResponse.buildFailure("推荐失败");
     }
 
     @Override

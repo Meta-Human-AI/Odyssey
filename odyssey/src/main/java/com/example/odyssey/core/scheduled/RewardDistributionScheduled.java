@@ -2,6 +2,7 @@ package com.example.odyssey.core.scheduled;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.example.odyssey.common.RebateEnum;
+import com.example.odyssey.common.RecommendEnum;
 import com.example.odyssey.common.RewardDistributionStatusEnum;
 import com.example.odyssey.model.entity.*;
 import com.example.odyssey.model.mapper.*;
@@ -15,6 +16,7 @@ import org.springframework.util.CollectionUtils;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -44,7 +46,8 @@ public class RewardDistributionScheduled {
     RegionRecommendMapper regionRecommendMapper;
     @Resource
     RegionRecommendLogMapper regionRecommendLogMapper;
-
+    @Resource
+    SystemConfigMapper systemConfigMapper;
 
     /**
      * 每天凌晨执行 发放昨天的ods奖励
@@ -61,13 +64,23 @@ public class RewardDistributionScheduled {
             return;
         }
 
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.DATE, -2); // 减去一天
+        calendar.set(Calendar.HOUR_OF_DAY, 23);
+        calendar.set(Calendar.MINUTE, 59);
+        calendar.set(Calendar.SECOND, 59);
+        calendar.set(Calendar.MILLISECOND, 999);
+
+        String yesterdayMaxTime = sdf.format(calendar.getTime());
+
         for (OdsConfig odsConfig : odsConfigList) {
             //todo 计算每个等级 每人获取的ods数量 再根据返佣比例计算返佣数量
 
             //计算每个等级总数
             QueryWrapper<NftMessage> nftMessageQueryWrapper = new QueryWrapper();
             nftMessageQueryWrapper.eq("type", odsConfig.getType());
-
+            nftMessageQueryWrapper.le("transfer_time",yesterdayMaxTime);
             List<NftMessage> nftMessages = nftMessageMapper.selectList(nftMessageQueryWrapper);
 
             if (nftMessages.isEmpty()) {
@@ -80,21 +93,21 @@ public class RewardDistributionScheduled {
 
             for (NftMessage nftMessage : nftMessages) {
 
-                String address = nftMessage.getOldAddress();
+                String address = nftMessage.getNewAddress();
 
-                if (Objects.nonNull(nftMessage.getBuyAddress()) && !nftMessage.getOldAddress().equals(nftMessage.getBuyAddress())) {
+                if (Objects.nonNull(nftMessage.getBuyAddress()) && !nftMessage.getNewAddress().equals(nftMessage.getBuyAddress())) {
                     address = nftMessage.getBuyAddress();
                 }
 
                 Map<String, String> rebateMap = getRebateMap(address, number, RebateEnum.ODS.getCode());
 
-                if (!address.equals(nftMessage.getOldAddress())){
+                if (!address.equals(nftMessage.getOldAddress())) {
 
                     String reward = rebateMap.get(address);
 
                     rebateMap.remove(address);
 
-                    rebateMap.put(nftMessage.getOldAddress(), reward);
+                    rebateMap.put(nftMessage.getNewAddress(), reward);
                 }
 
                 //todo 保存返佣记录
@@ -122,8 +135,29 @@ public class RewardDistributionScheduled {
         Recommend recommend = recommendMapper.selectOne(recommendQueryWrapper);
 
         Map<String, String> rebateMap = new HashMap<>();
+
+
+        QueryWrapper<SystemConfig> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("`key`","official_wallet_address");
+
+        SystemConfig systemConfig = systemConfigMapper.selectOne(queryWrapper);
+
+        if (Objects.isNull(recommend)){
+            if (rebateType.equals(RebateEnum.ODS.getCode())) {
+
+                //todo 还需要转到一个官方钱包 10%
+                BigDecimal service = number.multiply(new BigDecimal("0.12"));
+
+                rebateMap.put(systemConfig.getValue(),service.toString());
+
+                rebateMap.put(address, number.subtract(service).toString());
+            }
+
+            return rebateMap;
+        }
+
         //有推荐人，计算返佣
-        if (Objects.nonNull(recommend)) {
+        if (Objects.nonNull(recommend.getRecommendWalletAddress())) {
 
             QueryWrapper<RebateConfig> rebateConfigQueryWrapper = new QueryWrapper();
             rebateConfigQueryWrapper.eq("address", recommend.getLeaderWalletAddress());
@@ -158,16 +192,24 @@ public class RewardDistributionScheduled {
                         rebateMap.put(recommend.getWalletAddress(), number.subtract(first).subtract(second).toString());
                     }
                 }
-            } else {
-                //代表当前用户处在一级 不需要进行·返佣
-                if (rebateType.equals(RebateEnum.ODS.getCode())) {
-                    rebateMap.put(recommend.getWalletAddress(), number.toString());
-                }
             }
         } else {
-            //没有推荐人
+            //没有推荐人 或者代表当前用户处在一级 不需要进行·返佣
             if (rebateType.equals(RebateEnum.ODS.getCode())) {
-                rebateMap.put(address, number.toString());
+
+                if (recommend.getRecommendType().equals(RecommendEnum.LEADER.getCode())){
+
+                    rebateMap.put(address, number.toString());
+
+                }else {
+
+                    BigDecimal service = number.multiply(new BigDecimal("0.12"));
+
+                    rebateMap.put(systemConfig.getValue(),service.toString());
+
+                    rebateMap.put(address, number.subtract(service).toString());
+                }
+
             }
         }
 

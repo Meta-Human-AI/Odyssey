@@ -203,6 +203,7 @@ public class TransactionRecordScheduled {
 
                 nftMessageTransferCmd.setTokenId(bscScanTransactionLog.getTokenId());
                 nftMessageTransferCmd.setNewAddress(bscScanTransactionLog.getTo());
+                nftMessageTransferCmd.setTransferTime(time);
 
                 if (Objects.nonNull(nftMessageTransferCmd.getBuyAddress())) {
                     nftMessageTransferCmd.setOldAddress(nftMessageTransferCmd.getBuyAddress());
