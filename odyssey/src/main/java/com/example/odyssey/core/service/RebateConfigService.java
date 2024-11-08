@@ -3,11 +3,14 @@ package com.example.odyssey.core.service;
 import com.example.odyssey.bean.MultiResponse;
 import com.example.odyssey.bean.SingleResponse;
 import com.example.odyssey.bean.cmd.RebateConfigCreateCmd;
+import com.example.odyssey.bean.cmd.RebateConfigCreateDefaultCmd;
 import com.example.odyssey.bean.cmd.RebateConfigListQryCmd;
 import com.example.odyssey.bean.cmd.RebateConfigUpdateCmd;
 import com.example.odyssey.bean.dto.RebateConfigDTO;
 
 public interface RebateConfigService {
+
+    SingleResponse defaultAdd(RebateConfigCreateDefaultCmd rebateConfigCreateDefaultCmd);
 
 
     SingleResponse add(RebateConfigCreateCmd rebateConfigCreateCmd);

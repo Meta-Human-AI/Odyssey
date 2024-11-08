@@ -4,23 +4,15 @@ import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.example.odyssey.bean.MultiResponse;
 import com.example.odyssey.bean.SingleResponse;
-import com.example.odyssey.bean.cmd.RecommendCoreCreateCmd;
-import com.example.odyssey.bean.cmd.RecommendCreateCmd;
-import com.example.odyssey.bean.cmd.RecommendLeaderCreateCmd;
-import com.example.odyssey.bean.cmd.RecommendListQryCmd;
+import com.example.odyssey.bean.cmd.*;
 import com.example.odyssey.bean.dto.RecommendCoreDTO;
 import com.example.odyssey.bean.dto.RecommendListDTO;
 import com.example.odyssey.common.RebateEnum;
 import com.example.odyssey.common.RecommendEnum;
+import com.example.odyssey.core.service.RebateConfigService;
 import com.example.odyssey.core.service.RecommendService;
-import com.example.odyssey.model.entity.RebateConfig;
-import com.example.odyssey.model.entity.Recommend;
-import com.example.odyssey.model.entity.RecommendCoreLog;
-import com.example.odyssey.model.entity.SystemConfig;
-import com.example.odyssey.model.mapper.RebateConfigMapper;
-import com.example.odyssey.model.mapper.RecommendCoreLogMapper;
-import com.example.odyssey.model.mapper.RecommendMapper;
-import com.example.odyssey.model.mapper.SystemConfigMapper;
+import com.example.odyssey.model.entity.*;
+import com.example.odyssey.model.mapper.*;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
@@ -30,6 +22,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -52,6 +46,12 @@ public class RecommendServiceImpl implements RecommendService {
     @Resource
     SystemConfigMapper systemConfigMapper;
 
+    @Resource
+    RebateConfigService rebateConfigService;
+
+    @Resource
+    RewardDistributionRecordMapper rewardDistributionRecordMapper;
+
     @Override
     public SingleResponse<RecommendCoreDTO> getRecommendCore(RecommendCoreCreateCmd recommendCoreCreateCmd) {
 
@@ -64,12 +64,12 @@ public class RecommendServiceImpl implements RecommendService {
                 RecommendCoreDTO recommendCoreDTO = new RecommendCoreDTO();
 
                 QueryWrapper<Recommend> recommendQueryWrapper = new QueryWrapper<>();
-                recommendQueryWrapper.eq("wallet_address",recommendCoreCreateCmd.getWalletAddress());
+                recommendQueryWrapper.eq("wallet_address", recommendCoreCreateCmd.getWalletAddress());
                 Recommend recommend = recommendMapper.selectOne(recommendQueryWrapper);
 
-                if (Objects.nonNull(recommend)){
+                if (Objects.nonNull(recommend)) {
                     recommendCoreDTO.setRecommendWalletAddress(recommend.getRecommendWalletAddress());
-                }else {
+                } else {
 
                     recommend = new Recommend();
                     recommend.setWalletAddress(recommendCoreCreateCmd.getWalletAddress());
@@ -78,42 +78,10 @@ public class RecommendServiceImpl implements RecommendService {
                     recommend.setLeaderWalletAddress(recommendCoreCreateCmd.getWalletAddress());
                     recommendMapper.insert(recommend);
 
-                    QueryWrapper<SystemConfig> odsFirstRebateRateWrapper = new QueryWrapper<>();
-                    odsFirstRebateRateWrapper.eq("`key`", "ods_first_rebate_rate");
+                    RebateConfigCreateDefaultCmd rebateConfigCreateDefaultCmd = new RebateConfigCreateDefaultCmd();
+                    rebateConfigCreateDefaultCmd.setAddress(recommendCoreCreateCmd.getWalletAddress());
 
-                    SystemConfig odsFirstRebateRate = systemConfigMapper.selectOne(odsFirstRebateRateWrapper);
-
-                    QueryWrapper<SystemConfig> odsSecondRebateRateWrapper = new QueryWrapper<>();
-                    odsSecondRebateRateWrapper.eq("`key`", "ods_second_rebate_rate");
-
-                    SystemConfig odsSecondRebateRate = systemConfigMapper.selectOne(odsSecondRebateRateWrapper);
-
-                    QueryWrapper<SystemConfig> usdtFirstRebateRateWrapper = new QueryWrapper<>();
-                    usdtFirstRebateRateWrapper.eq("`key`", "usdt_first_rebate_rate");
-
-                    SystemConfig usdtFirstRebateRate = systemConfigMapper.selectOne(usdtFirstRebateRateWrapper);
-
-                    QueryWrapper<SystemConfig> usdtSecondRebateRateWrapper = new QueryWrapper<>();
-                    usdtSecondRebateRateWrapper.eq("`key`", "usdt_second_rebate_rate");
-
-                    SystemConfig usdtSecondRebateRate = systemConfigMapper.selectOne(usdtSecondRebateRateWrapper);
-
-                    RebateConfig odRebateConfig = new RebateConfig();
-                    odRebateConfig.setAddress(recommendCoreCreateCmd.getWalletAddress());
-                    odRebateConfig.setFirstRebateRate(Objects.isNull(odsFirstRebateRate) ? "0.02" : odsFirstRebateRate.getValue());
-                    odRebateConfig.setSecondRebateRate(Objects.isNull(odsSecondRebateRate) ? "0.1" : odsSecondRebateRate.getValue());
-                    odRebateConfig.setRecommendType(RecommendEnum.NORMAL.getCode());
-                    odRebateConfig.setRebateType(RebateEnum.ODS.getCode());
-
-                    RebateConfig usdtRebateConfig = new RebateConfig();
-                    usdtRebateConfig.setAddress(recommendCoreCreateCmd.getWalletAddress());
-                    usdtRebateConfig.setFirstRebateRate(Objects.isNull(usdtFirstRebateRate) ? "0.02" : usdtFirstRebateRate.getValue());
-                    usdtRebateConfig.setSecondRebateRate(Objects.isNull(usdtSecondRebateRate) ? "0.1" : usdtSecondRebateRate.getValue());
-                    usdtRebateConfig.setRecommendType(RecommendEnum.NORMAL.getCode());
-                    usdtRebateConfig.setRebateType(RebateEnum.USDT.getCode());
-
-                    rebateConfigMapper.insert(odRebateConfig);
-                    rebateConfigMapper.insert(usdtRebateConfig);
+                    rebateConfigService.defaultAdd(rebateConfigCreateDefaultCmd);
 
                     recommendCoreDTO.setRecommendWalletAddress("");
                 }
@@ -263,7 +231,7 @@ public class RecommendServiceImpl implements RecommendService {
         } catch (Exception e) {
             e.printStackTrace();
             return SingleResponse.buildFailure("推荐失败");
-        }finally {
+        } finally {
             if (redLock.isHeldByCurrentThread()) {
                 redLock.unlock();
             }
@@ -325,7 +293,7 @@ public class RecommendServiceImpl implements RecommendService {
             RecommendListDTO recommendListDTO = new RecommendListDTO();
             recommendListDTO.setWalletAddress(recommend.getWalletAddress());
 
-            getRecommendList(recommendListDTO);
+            getRecommendList(recommendListDTO, recommend.getWalletAddress());
             recommendList.add(recommendListDTO);
         }
 
@@ -333,7 +301,24 @@ public class RecommendServiceImpl implements RecommendService {
     }
 
 
-    private void getRecommendList(RecommendListDTO recommendListDTO) {
+    private void getRecommendList(RecommendListDTO recommendListDTO, String walletAddress) {
+
+        QueryWrapper<RewardDistributionRecord> rewardDistributionRecordQueryWrapper = new QueryWrapper<>();
+        rewardDistributionRecordQueryWrapper.eq("wallet_address", walletAddress);
+        rewardDistributionRecordQueryWrapper.eq("relation_address", recommendListDTO.getWalletAddress());
+
+        List<RewardDistributionRecord> rewardDistributionRecordList = rewardDistributionRecordMapper.selectList(rewardDistributionRecordQueryWrapper);
+        if (!CollectionUtils.isEmpty(rewardDistributionRecordList)) {
+
+            BigDecimal totalReward = rewardDistributionRecordList.stream()
+                    .map(RewardDistributionRecord::getRewardNumber)
+                    .map(BigDecimal::new)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add)
+                    .setScale(2, RoundingMode.DOWN)
+                    .add(new BigDecimal(recommendListDTO.getRewardNumber()));
+
+            recommendListDTO.setRewardNumber(totalReward.toString());
+        }
 
         QueryWrapper<Recommend> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("recommend_wallet_address", recommendListDTO.getWalletAddress());
@@ -351,9 +336,10 @@ public class RecommendServiceImpl implements RecommendService {
             RecommendListDTO childRecommend = new RecommendListDTO();
             childRecommend.setWalletAddress(recommend.getWalletAddress());
             childRecommendList.add(childRecommend);
-            getRecommendList(childRecommend);
+            getRecommendList(childRecommend, walletAddress);
         }
 
+        //recommendListDTO.setRewardNumber(childRecommendList.stream().map(RecommendListDTO::getRewardNumber).map(BigDecimal::new).reduce(BigDecimal.ZERO, BigDecimal::add).toString());
         recommendListDTO.setCount(childRecommendList.stream().map(RecommendListDTO::getCount).reduce(Integer::sum).orElse(0) + childRecommendList.size());
         recommendListDTO.setRecommendList(childRecommendList);
 

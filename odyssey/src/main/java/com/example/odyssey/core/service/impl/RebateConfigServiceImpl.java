@@ -5,12 +5,17 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.odyssey.bean.MultiResponse;
 import com.example.odyssey.bean.SingleResponse;
 import com.example.odyssey.bean.cmd.RebateConfigCreateCmd;
+import com.example.odyssey.bean.cmd.RebateConfigCreateDefaultCmd;
 import com.example.odyssey.bean.cmd.RebateConfigListQryCmd;
 import com.example.odyssey.bean.cmd.RebateConfigUpdateCmd;
 import com.example.odyssey.bean.dto.RebateConfigDTO;
+import com.example.odyssey.common.RebateEnum;
+import com.example.odyssey.common.RecommendEnum;
 import com.example.odyssey.core.service.RebateConfigService;
 import com.example.odyssey.model.entity.RebateConfig;
+import com.example.odyssey.model.entity.SystemConfig;
 import com.example.odyssey.model.mapper.RebateConfigMapper;
+import com.example.odyssey.model.mapper.SystemConfigMapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +31,55 @@ public class RebateConfigServiceImpl implements RebateConfigService {
 
     @Resource
     RebateConfigMapper rebateConfigMapper;
+
+    @Resource
+    SystemConfigMapper systemConfigMapper;
+
+    @Override
+    public SingleResponse defaultAdd(RebateConfigCreateDefaultCmd rebateConfigCreateDefaultCmd) {
+
+        QueryWrapper<SystemConfig> odsFirstRebateRateWrapper = new QueryWrapper<>();
+        odsFirstRebateRateWrapper.eq("`key`", "ods_first_rebate_rate");
+
+        SystemConfig odsFirstRebateRate = systemConfigMapper.selectOne(odsFirstRebateRateWrapper);
+
+        QueryWrapper<SystemConfig> odsSecondRebateRateWrapper = new QueryWrapper<>();
+        odsSecondRebateRateWrapper.eq("`key`", "ods_second_rebate_rate");
+
+        SystemConfig odsSecondRebateRate = systemConfigMapper.selectOne(odsSecondRebateRateWrapper);
+
+        QueryWrapper<SystemConfig> usdtFirstRebateRateWrapper = new QueryWrapper<>();
+        usdtFirstRebateRateWrapper.eq("`key`", "usdt_first_rebate_rate");
+
+        SystemConfig usdtFirstRebateRate = systemConfigMapper.selectOne(usdtFirstRebateRateWrapper);
+
+        QueryWrapper<SystemConfig> usdtSecondRebateRateWrapper = new QueryWrapper<>();
+        usdtSecondRebateRateWrapper.eq("`key`", "usdt_second_rebate_rate");
+
+        SystemConfig usdtSecondRebateRate = systemConfigMapper.selectOne(usdtSecondRebateRateWrapper);
+
+
+        RebateConfigCreateCmd odRebateConfig = new RebateConfigCreateCmd();
+        odRebateConfig.setAddress(rebateConfigCreateDefaultCmd.getAddress());
+        odRebateConfig.setFirstRebateRate(Objects.isNull(odsFirstRebateRate) ? "0.02" : odsFirstRebateRate.getValue());
+        odRebateConfig.setSecondRebateRate(Objects.isNull(odsSecondRebateRate) ? "0.1" : odsSecondRebateRate.getValue());
+        odRebateConfig.setRecommendType(RecommendEnum.NORMAL.getCode());
+        odRebateConfig.setRebateType(RebateEnum.ODS.getCode());
+
+        RebateConfigCreateCmd usdtRebateConfig = new RebateConfigCreateCmd();
+        usdtRebateConfig.setAddress(rebateConfigCreateDefaultCmd.getAddress());
+        usdtRebateConfig.setFirstRebateRate(Objects.isNull(usdtFirstRebateRate) ? "0.02" : usdtFirstRebateRate.getValue());
+        usdtRebateConfig.setSecondRebateRate(Objects.isNull(usdtSecondRebateRate) ? "0.1" : usdtSecondRebateRate.getValue());
+        usdtRebateConfig.setRecommendType(RecommendEnum.NORMAL.getCode());
+        usdtRebateConfig.setRebateType(RebateEnum.USDT.getCode());
+
+        add(odRebateConfig);
+
+        add(usdtRebateConfig);
+
+
+        return SingleResponse.buildSuccess();
+    }
 
     @Override
     public SingleResponse add(RebateConfigCreateCmd rebateConfigCreateCmd) {

@@ -2,9 +2,12 @@ package com.example.odyssey.core.scheduled;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.example.odyssey.bean.cmd.NftMessageTransferCmd;
+import com.example.odyssey.common.RebateEnum;
 import com.example.odyssey.core.service.NftMessageService;
+import com.example.odyssey.model.entity.NftMessage;
+import com.example.odyssey.model.entity.OdsConfig;
 import com.example.odyssey.model.entity.TransactionRecord;
-import com.example.odyssey.model.mapper.TransactionRecordMapper;
+import com.example.odyssey.model.mapper.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -12,12 +15,15 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @Slf4j
 @Component
@@ -70,6 +76,7 @@ public class TransferScheduled {
         });
 
         log.info("transfer 结束执行");
+
     }
 
 }
