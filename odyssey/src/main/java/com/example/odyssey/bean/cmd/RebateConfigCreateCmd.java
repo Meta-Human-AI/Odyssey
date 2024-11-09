@@ -19,6 +19,11 @@ public class RebateConfigCreateCmd {
      */
     private String secondRebateRate;
 
+    /**
+     * 三级推荐人
+     */
+    private String threeRebateRate;
+
 
     /**
      * 推荐类型

@@ -17,6 +17,7 @@ import com.example.odyssey.model.entity.SystemConfig;
 import com.example.odyssey.model.mapper.RebateConfigMapper;
 import com.example.odyssey.model.mapper.SystemConfigMapper;
 import org.springframework.beans.BeanUtils;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,7 +37,7 @@ public class RebateConfigServiceImpl implements RebateConfigService {
     SystemConfigMapper systemConfigMapper;
 
     @Override
-    public SingleResponse defaultAdd(RebateConfigCreateDefaultCmd rebateConfigCreateDefaultCmd) {
+    public synchronized SingleResponse defaultAdd(RebateConfigCreateDefaultCmd rebateConfigCreateDefaultCmd) {
 
         QueryWrapper<SystemConfig> odsFirstRebateRateWrapper = new QueryWrapper<>();
         odsFirstRebateRateWrapper.eq("`key`", "ods_first_rebate_rate");
@@ -48,6 +49,12 @@ public class RebateConfigServiceImpl implements RebateConfigService {
 
         SystemConfig odsSecondRebateRate = systemConfigMapper.selectOne(odsSecondRebateRateWrapper);
 
+
+        QueryWrapper<SystemConfig> odsThreeRebateRateWrapper = new QueryWrapper<>();
+        odsThreeRebateRateWrapper.eq("`key`", "ods_three_rebate_rate");
+
+        SystemConfig odsThreeRebateRate = systemConfigMapper.selectOne(odsThreeRebateRateWrapper);
+
         QueryWrapper<SystemConfig> usdtFirstRebateRateWrapper = new QueryWrapper<>();
         usdtFirstRebateRateWrapper.eq("`key`", "usdt_first_rebate_rate");
 
@@ -58,18 +65,25 @@ public class RebateConfigServiceImpl implements RebateConfigService {
 
         SystemConfig usdtSecondRebateRate = systemConfigMapper.selectOne(usdtSecondRebateRateWrapper);
 
+        QueryWrapper<SystemConfig> usdtThreeRebateRateWrapper = new QueryWrapper<>();
+        usdtThreeRebateRateWrapper.eq("`key`", "usdt_three_rebate_rate");
+
+        SystemConfig usdtThreeRebateRate = systemConfigMapper.selectOne(usdtThreeRebateRateWrapper);
 
         RebateConfigCreateCmd odRebateConfig = new RebateConfigCreateCmd();
         odRebateConfig.setAddress(rebateConfigCreateDefaultCmd.getAddress());
-        odRebateConfig.setFirstRebateRate(Objects.isNull(odsFirstRebateRate) ? "0.02" : odsFirstRebateRate.getValue());
+        odRebateConfig.setFirstRebateRate(Objects.isNull(odsFirstRebateRate) ? "0.1" : odsFirstRebateRate.getValue());
         odRebateConfig.setSecondRebateRate(Objects.isNull(odsSecondRebateRate) ? "0.1" : odsSecondRebateRate.getValue());
+        odRebateConfig.setThreeRebateRate(Objects.isNull(odsThreeRebateRate) ? "0.2" : odsThreeRebateRate.getValue());
         odRebateConfig.setRecommendType(RecommendEnum.NORMAL.getCode());
+
         odRebateConfig.setRebateType(RebateEnum.ODS.getCode());
 
         RebateConfigCreateCmd usdtRebateConfig = new RebateConfigCreateCmd();
         usdtRebateConfig.setAddress(rebateConfigCreateDefaultCmd.getAddress());
-        usdtRebateConfig.setFirstRebateRate(Objects.isNull(usdtFirstRebateRate) ? "0.02" : usdtFirstRebateRate.getValue());
+        usdtRebateConfig.setFirstRebateRate(Objects.isNull(usdtFirstRebateRate) ? "0.1" : usdtFirstRebateRate.getValue());
         usdtRebateConfig.setSecondRebateRate(Objects.isNull(usdtSecondRebateRate) ? "0.1" : usdtSecondRebateRate.getValue());
+        usdtRebateConfig.setThreeRebateRate(Objects.isNull(usdtThreeRebateRate) ? "0.2" : usdtThreeRebateRate.getValue());
         usdtRebateConfig.setRecommendType(RecommendEnum.NORMAL.getCode());
         usdtRebateConfig.setRebateType(RebateEnum.USDT.getCode());
 
@@ -82,7 +96,7 @@ public class RebateConfigServiceImpl implements RebateConfigService {
     }
 
     @Override
-    public SingleResponse add(RebateConfigCreateCmd rebateConfigCreateCmd) {
+    public synchronized SingleResponse add(RebateConfigCreateCmd rebateConfigCreateCmd) {
 
         QueryWrapper<RebateConfig> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("address", rebateConfigCreateCmd.getAddress());
@@ -97,7 +111,12 @@ public class RebateConfigServiceImpl implements RebateConfigService {
         rebateConfig = new RebateConfig();
         BeanUtils.copyProperties(rebateConfigCreateCmd, rebateConfig);
 
-        rebateConfigMapper.insert(rebateConfig);
+        try {
+            rebateConfigMapper.insert(rebateConfig);
+        } catch (DuplicateKeyException e) {
+            // 处理并发插入导致的唯一索引冲突
+            throw new RuntimeException("系统繁忙，请稍后重试");
+        }
 
         return SingleResponse.buildSuccess();
     }

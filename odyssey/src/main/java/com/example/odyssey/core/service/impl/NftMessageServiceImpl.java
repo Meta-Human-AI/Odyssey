@@ -16,7 +16,9 @@ import com.example.odyssey.model.mapper.*;
 import com.example.odyssey.util.AESUtils;
 import com.example.odyssey.util.Web3jUtil;
 import io.jsonwebtoken.lang.Collections;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +31,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @Transactional
 public class NftMessageServiceImpl implements NftMessageService {
@@ -101,6 +104,7 @@ public class NftMessageServiceImpl implements NftMessageService {
                     nftMessage.setNewAddress(nftMessageCreateDTO.getAddress());
                     nftMessage.setBuyTime(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
                     nftMessage.setBuyAddress(nftMessageCreateDTO.getAddress());
+                    nftMessage.setTransferTime(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
                     nftMessageMapper.updateById(nftMessage);
                     break;
                 }
@@ -123,7 +127,7 @@ public class NftMessageServiceImpl implements NftMessageService {
     }
 
     @Override
-    public SingleResponse<NftMessageDTO> getNftMessage(NftMessageQryCmd nftMessageQryCmd) {
+    public synchronized SingleResponse<NftMessageDTO> getNftMessage(NftMessageQryCmd nftMessageQryCmd) {
 
         NftMessageDTO nftMessageDTO = new NftMessageDTO();
 
@@ -163,8 +167,13 @@ public class NftMessageServiceImpl implements NftMessageService {
                 nftMessage.setUrl(systemConfig.getValue());
             }
 
-            nftMessageMapper.insert(nftMessage);
-
+            try {
+                nftMessageMapper.insert(nftMessage);
+            } catch (DuplicateKeyException e) {
+                // 处理并发插入导致的唯一索引冲突
+                log.error("并发创建NFT{}",nftMessage.getTokenId());
+                throw new RuntimeException("系统繁忙，请稍后重试");
+            }
             nftMessageDTO.setTokenId(nftMessageQryCmd.getTokenId());
             nftMessageDTO.setType(nftIdToLevel.getLevel());
             nftMessageDTO.setId(nftMessage.getId());

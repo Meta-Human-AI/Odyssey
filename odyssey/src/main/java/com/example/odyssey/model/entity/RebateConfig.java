@@ -34,6 +34,11 @@ public class RebateConfig {
     private String secondRebateRate;
 
     /**
+     * 三级推荐人
+     */
+    private String threeRebateRate;
+
+    /**
      * 推荐类型
      */
     private String recommendType;

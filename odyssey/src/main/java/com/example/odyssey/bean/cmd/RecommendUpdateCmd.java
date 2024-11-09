@@ -3,7 +3,9 @@ package com.example.odyssey.bean.cmd;
 import lombok.Data;
 
 @Data
-public class RecommendCreateCmd {
+public class RecommendUpdateCmd {
+
+    private Integer id;
 
     /**
      * 钱包地址

@@ -18,5 +18,7 @@ public class RecommendListDTO {
     private Integer count = 0;
 
 
-    private String rewardNumber = "0";
+    private String odsRewardNumber = "0";
+
+    private String usdtRewardNumber = "0";
 }

@@ -15,7 +15,10 @@ public class RebateConfigUpdateCmd {
      * 二级推荐人返利比例
      */
     private String secondRebateRate;
-
+    /**
+     * 三级推荐人
+     */
+    private String threeRebateRate;
 
     /**
      * 推荐类型

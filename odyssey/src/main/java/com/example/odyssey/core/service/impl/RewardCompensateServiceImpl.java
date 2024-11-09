@@ -157,14 +157,14 @@ public class RewardCompensateServiceImpl implements RewardCompensateService {
             //代表当前用户处在二级
             if (Objects.isNull(nftDailyHoldRecord.getSecondRecommendWalletAddress())) {
 
-                BigDecimal first = number.multiply(new BigDecimal(rebateConfig.getSecondRebateRate()));
+                BigDecimal first = number.multiply(new BigDecimal(rebateConfig.getFirstRebateRate()));
 
                 rebateMap.put(nftDailyHoldRecord.getFirstRecommendWalletAddress(), first.toString());
 
                 rebateMap.put(nftDailyHoldRecord.getWalletAddress(), number.subtract(first).toString());
 
             } else {
-                BigDecimal first = number.multiply(new BigDecimal(rebateConfig.getFirstRebateRate()));
+                BigDecimal first = number.multiply(new BigDecimal(rebateConfig.getThreeRebateRate()));
                 rebateMap.put(nftDailyHoldRecord.getFirstRecommendWalletAddress(), first.toString());
 
                 BigDecimal second = number.multiply(new BigDecimal(rebateConfig.getSecondRebateRate()));

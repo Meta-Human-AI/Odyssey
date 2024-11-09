@@ -173,7 +173,7 @@ public class RewardDistributionScheduled {
                 //代表当前用户处在二级
                 if (Objects.isNull(recommend.getSecondRecommendWalletAddress())) {
 
-                    BigDecimal first = number.multiply(new BigDecimal(rebateConfig.getSecondRebateRate()));
+                    BigDecimal first = number.multiply(new BigDecimal(rebateConfig.getFirstRebateRate()));
 
                     rebateMap.put(recommend.getFirstRecommendWalletAddress(), first.toString());
 
@@ -182,7 +182,7 @@ public class RewardDistributionScheduled {
                     }
 
                 } else {
-                    BigDecimal first = number.multiply(new BigDecimal(rebateConfig.getFirstRebateRate()));
+                    BigDecimal first = number.multiply(new BigDecimal(rebateConfig.getThreeRebateRate()));
                     rebateMap.put(recommend.getFirstRecommendWalletAddress(), first.toString());
 
                     BigDecimal second = number.multiply(new BigDecimal(rebateConfig.getSecondRebateRate()));
