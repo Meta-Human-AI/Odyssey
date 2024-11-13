@@ -16,24 +16,27 @@ public class EmailUtil {
     public String getVerificationCode() {
         return String.valueOf((int) ((Math.random() * 9 + 1) * 100000));
     }
+
     /**
      * 生成邮件内容
      *
      * @param verificationCode
      * @return
      */
-    public String getEmailContent(String verificationCode,String url) {
-        String content = "Dear User, please click on the following link to verify your email: " +
-                url + "/odyssey/v1/email/verify?code=" + verificationCode;
+    public String getEmailContent(String verificationCode) {
+        String content = "Dear user, this is your hotel reservation verification code: " + verificationCode
+                + " please verify it on the platform within 5 minutes ";
+
         return content;
     }
+
     /**
      * 验证邮箱格式
      *
      * @param email
      * @return
      */
-    public  Boolean isEmail(String email) {
+    public Boolean isEmail(String email) {
         if (email == null || email.length() < 1 || email.length() > 256) {
             return false;
         }

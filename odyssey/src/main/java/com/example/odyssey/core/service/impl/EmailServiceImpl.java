@@ -76,17 +76,17 @@ public class EmailServiceImpl implements EmailService {
 
         QueryWrapper<SystemConfig> systemQueryWrapper = new QueryWrapper<>();
 
-        systemQueryWrapper.eq("`key`", "url");
-
-        SystemConfig systemConfig = systemConfigMapper.selectOne(systemQueryWrapper);
-
-        if (Objects.isNull(systemConfig)) {
-            return SingleResponse.buildFailure("URL configuration not found");
-        }
+//        systemQueryWrapper.eq("`key`", "url");
+//
+//        SystemConfig systemConfig = systemConfigMapper.selectOne(systemQueryWrapper);
+//
+//        if (Objects.isNull(systemConfig)) {
+//            return SingleResponse.buildFailure("URL configuration not found");
+//        }
 
         String verificationCode = emailUtil.getVerificationCode();
 
-        String emailContent = emailUtil.getEmailContent(verificationCode, systemConfig.getValue());
+        String emailContent = emailUtil.getEmailContent(verificationCode);
 
         // todo 发送邮件
         SimpleMailMessage message = new SimpleMailMessage();
