@@ -21,6 +21,7 @@ import io.jsonwebtoken.lang.Collections;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -57,6 +58,10 @@ public class HotelServiceImpl implements HotelService {
                 return SingleResponse.buildFailure("所在城市不存在");
             }
 
+            if (Objects.isNull(hotelCreateCmd.getStateName())){
+                hotelCreateCmd.setState(city.getState());
+            }
+
             hotelCreateCmd.setCity(city.getCode());
         }
 
@@ -76,12 +81,10 @@ public class HotelServiceImpl implements HotelService {
         }
 
         Hotel hotel = hotelMapper.selectOne(queryWrapper);
-        if (Objects.nonNull(hotel)) {
-            return SingleResponse.buildSuccess();
+        if (Objects.isNull(hotel)) {
+            hotel = new Hotel();
         }
 
-
-        hotel = new Hotel();
         hotel.setName(hotelCreateCmd.getName());
         hotel.setState(hotelCreateCmd.getState());
         hotel.setCity(hotelCreateCmd.getCity());
@@ -91,8 +94,12 @@ public class HotelServiceImpl implements HotelService {
         hotel.setIntroduction(hotelCreateCmd.getIntroduction());
         hotel.setOfficialWebsite(hotelCreateCmd.getOfficialWebsite());
         hotel.setImage(JSONUtil.toJsonStr(hotelCreateCmd.getImage()));
-        hotelMapper.insert(hotel);
 
+        if (Objects.isNull(hotel.getId())){
+            hotelMapper.insert(hotel);
+        }else {
+            hotelMapper.updateById(hotel);
+        }
         return SingleResponse.buildSuccess();
     }
 
@@ -158,10 +165,16 @@ public class HotelServiceImpl implements HotelService {
         for (Hotel hotel : hotelPage.getRecords()) {
             HotelDTO hotelDTO = new HotelDTO();
             BeanUtils.copyProperties(hotel, hotelDTO);
-            hotelDTO.setState(StateEnum.of(hotel.getState()).getName());
-
-            String city = cityMap.get(hotel.getCity());
-            hotelDTO.setCity(city);
+            if(Objects.nonNull(hotel.getState())){
+                StateEnum stateEnum = StateEnum.of(hotel.getState());
+                if (Objects.nonNull(stateEnum)){
+                    hotelDTO.setState(stateEnum.getName());
+                }
+            }
+            if (Objects.nonNull(hotel.getCity())){
+                String city = cityMap.get(hotel.getCity());
+                hotelDTO.setCity(city);
+            }
             hotelDTO.setImage(JSONUtil.toList(hotel.getImage(), String.class));
             hotelList.add(hotelDTO);
         }
@@ -210,9 +223,16 @@ public class HotelServiceImpl implements HotelService {
         for (Hotel hotel : hotels) {
             HotelDTO hotelDTO = new HotelDTO();
             BeanUtils.copyProperties(hotel, hotelDTO);
-            hotelDTO.setState(StateEnum.of(hotel.getState()).getName());
-            String city = cityMap.get(hotel.getCity());
-            hotelDTO.setCity(city);
+            if(Objects.nonNull(hotel.getState())){
+                StateEnum stateEnum = StateEnum.of(hotel.getState());
+                if (Objects.nonNull(stateEnum)){
+                    hotelDTO.setState(stateEnum.getName());
+                }
+            }
+            if (Objects.nonNull(hotel.getCity())){
+                String city = cityMap.get(hotel.getCity());
+                hotelDTO.setCity(city);
+            }
             hotelDTO.setImage(JSONUtil.toList(hotel.getImage(), String.class));
             hotelList.add(hotelDTO);
         }
