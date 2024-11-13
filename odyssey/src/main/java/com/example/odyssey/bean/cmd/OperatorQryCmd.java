@@ -6,4 +6,6 @@ import lombok.Data;
 public class OperatorQryCmd {
 
     private Integer id;
+
+    private String walletAddress;
 }

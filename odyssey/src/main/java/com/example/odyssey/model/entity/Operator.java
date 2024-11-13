@@ -24,4 +24,6 @@ public class Operator {
 
     private String status;
 
+    private String walletAddress;
+
 }

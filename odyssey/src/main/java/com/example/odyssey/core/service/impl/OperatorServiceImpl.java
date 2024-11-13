@@ -6,6 +6,7 @@ import com.example.odyssey.bean.MultiResponse;
 import com.example.odyssey.bean.SingleResponse;
 import com.example.odyssey.bean.cmd.*;
 import com.example.odyssey.bean.dto.OperatorDTO;
+import com.example.odyssey.bean.dto.OperatorInfoDTO;
 import com.example.odyssey.bean.dto.OperatorLoginDTO;
 import com.example.odyssey.common.OperatorStatusEnum;
 import com.example.odyssey.core.service.OperatorService;
@@ -188,5 +189,24 @@ public class OperatorServiceImpl implements OperatorService {
         }
 
         return MultiResponse.of(operatorDTOList, (int) operatorPage.getTotal());
+    }
+
+    @Override
+    public SingleResponse<OperatorInfoDTO> queryOperatorInfo(OperatorQryCmd operatorQryCmd) {
+
+        QueryWrapper<Operator> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("wallet_address", operatorQryCmd.getWalletAddress());
+
+        Long count = operatorMapper.selectCount(queryWrapper);
+
+        OperatorInfoDTO operatorInfoDTO = new OperatorInfoDTO();
+        operatorInfoDTO.setWalletAddress(operatorQryCmd.getWalletAddress());
+
+        if (count > 0) {
+            operatorInfoDTO.setHasPermission(true);
+        } else {
+            operatorInfoDTO.setHasPermission(false);
+        }
+        return SingleResponse.of(operatorInfoDTO);
     }
 }

@@ -4,6 +4,7 @@ import com.example.odyssey.bean.MultiResponse;
 import com.example.odyssey.bean.SingleResponse;
 import com.example.odyssey.bean.cmd.*;
 import com.example.odyssey.bean.dto.OperatorDTO;
+import com.example.odyssey.bean.dto.OperatorInfoDTO;
 import com.example.odyssey.bean.dto.OperatorLoginDTO;
 
 public interface OperatorService {
@@ -25,6 +26,9 @@ public interface OperatorService {
     SingleResponse<OperatorDTO> queryOperator(OperatorQryCmd operatorQryCmd);
 
     MultiResponse<OperatorDTO> listOperator(OperatorListQryCmd operatorListQryCmd);
+
+
+    SingleResponse<OperatorInfoDTO> queryOperatorInfo(OperatorQryCmd operatorQryCmd);
 
 
 }
