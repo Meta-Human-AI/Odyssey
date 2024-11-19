@@ -197,15 +197,17 @@ public class OperatorServiceImpl implements OperatorService {
         QueryWrapper<Operator> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("wallet_address", operatorQryCmd.getWalletAddress());
 
-        Long count = operatorMapper.selectCount(queryWrapper);
+        Operator operator = operatorMapper.selectOne(queryWrapper);
 
         OperatorInfoDTO operatorInfoDTO = new OperatorInfoDTO();
         operatorInfoDTO.setWalletAddress(operatorQryCmd.getWalletAddress());
 
-        if (count > 0) {
+        if (Objects.nonNull(operator)) {
             operatorInfoDTO.setHasPermission(true);
+            operatorInfoDTO.setSuperOperator(operator.getSuperOperator());
         } else {
             operatorInfoDTO.setHasPermission(false);
+            operatorInfoDTO.setSuperOperator(false);
         }
         return SingleResponse.of(operatorInfoDTO);
     }

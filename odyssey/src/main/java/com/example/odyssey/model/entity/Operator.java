@@ -26,4 +26,6 @@ public class Operator {
 
     private String walletAddress;
 
+    private Boolean superOperator;
+
 }

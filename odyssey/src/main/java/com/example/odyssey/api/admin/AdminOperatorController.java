@@ -5,6 +5,7 @@ import com.example.odyssey.bean.MultiResponse;
 import com.example.odyssey.bean.SingleResponse;
 import com.example.odyssey.bean.cmd.*;
 import com.example.odyssey.bean.dto.OperatorDTO;
+import com.example.odyssey.bean.dto.OperatorInfoDTO;
 import com.example.odyssey.bean.dto.OperatorLoginDTO;
 import com.example.odyssey.core.service.OperatorService;
 import com.example.odyssey.util.JwtTokenUtil;
@@ -104,5 +105,12 @@ public class AdminOperatorController {
     @PostMapping("/list")
     MultiResponse<OperatorDTO> listOperator(@RequestBody OperatorListQryCmd operatorListQryCmd) {
         return operatorService.listOperator(operatorListQryCmd);
+    }
+
+    @PostMapping("/info")
+    SingleResponse<OperatorInfoDTO> queryOperatorInfo(@RequestBody OperatorQryCmd operatorQryCmd){
+
+        Assert.notNull(operatorQryCmd.getWalletAddress(), "钱包地址不能为空");
+        return operatorService.queryOperatorInfo(operatorQryCmd);
     }
 }

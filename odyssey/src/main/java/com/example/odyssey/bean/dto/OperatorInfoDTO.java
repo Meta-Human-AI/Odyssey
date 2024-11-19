@@ -8,4 +8,6 @@ public class OperatorInfoDTO {
     private String walletAddress;
 
     private Boolean hasPermission;
+
+    private Boolean superOperator;
 }
