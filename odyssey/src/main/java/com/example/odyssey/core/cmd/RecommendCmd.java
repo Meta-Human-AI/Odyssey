@@ -160,7 +160,7 @@ public class RecommendCmd {
 
                 //更新下级
                 QueryWrapper<Recommend> chirdRecommendQueryWrapper = new QueryWrapper<>();
-                chirdRecommendQueryWrapper.eq("first_recommend_wallet_address", recommend.getWalletAddress());
+                chirdRecommendQueryWrapper.eq("leader_wallet_address", recommend.getWalletAddress());
 
                 List<Recommend> recommends = recommendMapper.selectList(chirdRecommendQueryWrapper);
                 for (Recommend childRecommend : recommends) {
@@ -182,7 +182,6 @@ public class RecommendCmd {
                         }else {
                                 //第三级
                             if (Objects.isNull(childRecommend.getSecondRecommendWalletAddress())){
-
                                 childRecommend.setFirstRecommendWalletAddress(recommend.getSecondRecommendWalletAddress());
                                 childRecommend.setSecondRecommendWalletAddress(recommend.getWalletAddress());
                             }
