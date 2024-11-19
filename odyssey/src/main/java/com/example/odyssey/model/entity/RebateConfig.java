@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 @TableName("rebate_config")
 public class RebateConfig {
 
-    @TableId(type = IdType.INPUT)
+    @TableId(type = IdType.AUTO)
     private Integer id;
 
     /**

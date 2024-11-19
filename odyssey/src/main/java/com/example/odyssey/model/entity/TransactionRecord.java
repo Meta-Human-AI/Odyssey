@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 @TableName("transaction_record")
 public class TransactionRecord {
 
-    @TableId(type = IdType.INPUT)
+    @TableId(type = IdType.AUTO)
     private Integer id;
     /**
      * 地址

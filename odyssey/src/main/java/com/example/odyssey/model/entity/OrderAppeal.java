@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 @TableName("order_appeal")
 public class OrderAppeal {
 
-    @TableId(type = IdType.INPUT)
+    @TableId(type = IdType.AUTO)
     private Integer id;
     /**
      * 订单id

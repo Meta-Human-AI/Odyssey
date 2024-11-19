@@ -39,6 +39,4 @@ public class NftMessageController {
 
         return nftMessageService.getNftMessageMetadata(nftMessageMetadataQryCmd).getData();
     }
-
-
 }

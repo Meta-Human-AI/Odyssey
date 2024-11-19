@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 @TableName("region_recommend")
 public class RegionRecommend {
 
-    @TableId(type = IdType.INPUT)
+    @TableId(type = IdType.AUTO)
     private Integer id;
 
     /**

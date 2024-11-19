@@ -18,7 +18,7 @@ import lombok.NoArgsConstructor;
 @TableName("recommend")
 public class Recommend{
 
-    @TableId(type = IdType.INPUT)
+    @TableId(type = IdType.AUTO)
     private Integer id;
 
     /**
@@ -60,4 +60,8 @@ public class Recommend{
      * 创建时间
      */
     private Long createTime;
+    /**
+     * 推荐时间
+     */
+    private Long recommendTime;
 }

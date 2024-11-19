@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 @TableName("`nft_daily_hold_record`")
 public class NftDailyHoldRecord {
 
-    @TableId(type = IdType.INPUT)
+    @TableId(type = IdType.AUTO)
     private Integer id;
 
     /**
@@ -37,6 +37,10 @@ public class NftDailyHoldRecord {
      * 二级推荐人钱包地址
      */
     private String secondRecommendWalletAddress;
+    /**
+     * 推荐人钱包地址
+     */
+    private String recommendWalletAddress;
 
     /**
      * 领导钱包地址
@@ -58,4 +62,8 @@ public class NftDailyHoldRecord {
      * 转入时间
      */
     private String transferTime;
+    /**
+     * 推荐时间
+     */
+    private Long recommendTime;
 }

@@ -20,6 +20,7 @@ import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
@@ -99,9 +100,9 @@ public class RewardDistributionScheduled {
                     address = nftMessage.getBuyAddress();
                 }
 
-                Map<String, String> rebateMap = getRebateMap(address, number, RebateEnum.ODS.getCode());
+                Map<String, String> rebateMap = getRebateMap(address, number, RebateEnum.ODS.getCode(),nftMessage);
 
-                if (!address.equals(nftMessage.getOldAddress())) {
+                if (Objects.nonNull(nftMessage.getBuyAddress()) && !nftMessage.getNewAddress().equals(nftMessage.getBuyAddress())) {
 
                     String reward = rebateMap.get(address);
 
@@ -127,11 +128,11 @@ public class RewardDistributionScheduled {
      * @param rebateType
      * @return
      */
-    public Map<String, String> getRebateMap(String address, BigDecimal number, String rebateType) {
+    public Map<String, String> getRebateMap(String address, BigDecimal number, String rebateType,NftMessage nftMessage) {
 
         QueryWrapper<Recommend> recommendQueryWrapper = new QueryWrapper();
         recommendQueryWrapper.eq("wallet_address", address);
-        //查看是否有推荐人
+        //查看是否在推荐体系
         Recommend recommend = recommendMapper.selectOne(recommendQueryWrapper);
 
         Map<String, String> rebateMap = new HashMap<>();
@@ -158,6 +159,49 @@ public class RewardDistributionScheduled {
 
         //有推荐人，计算返佣
         if (Objects.nonNull(recommend.getRecommendWalletAddress())) {
+
+            if (Objects.nonNull(recommend.getRecommendTime())){
+                //如果 是购买的 空投的 转入的时间在 建立推荐关系之前 不给上层返佣
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                LocalDateTime dateTime = null;
+
+                if (Objects.nonNull(nftMessage.getBuyTime())){
+                    //购买的
+                     dateTime = LocalDateTime.parse(nftMessage.getBuyTime(), formatter);
+                }else if (Objects.nonNull(nftMessage.getAirdropTime())){
+                    //空投的
+                    dateTime = LocalDateTime.parse(nftMessage.getAirdropTime(), formatter);
+                }else {
+                    //转入的
+                    dateTime = LocalDateTime.parse(nftMessage.getTransferTime(), formatter);
+                }
+                Long timestamp = dateTime.toEpochSecond(ZoneOffset.UTC) * 1000;
+
+                if (rebateType.equals(RebateEnum.USDT.getCode())) {
+
+                    if (recommend.getRecommendTime() > timestamp){
+                        return rebateMap;
+                    }
+
+                }else {
+
+                    if (recommend.getRecommendTime() > timestamp){
+
+                        // 还需要转到一个官方钱包 10%
+                        BigDecimal service = number.multiply(new BigDecimal("0.12"));
+
+                        rebateMap.put(systemConfig.getValue(),service.toString());
+
+                        rebateMap.put(address, number.subtract(service).toString());
+
+                        return rebateMap;
+                    }
+                }
+
+            }else {
+
+                return rebateMap;
+            }
 
             QueryWrapper<RebateConfig> rebateConfigQueryWrapper = new QueryWrapper();
             rebateConfigQueryWrapper.eq("address", recommend.getLeaderWalletAddress());
@@ -218,7 +262,6 @@ public class RewardDistributionScheduled {
 
     public void saveRewardDistributionRecord(Map<String, String> rebateMap, NftMessage nftMessage, String rebateType) {
 
-        List<RewardDistributionRecord> rewardDistributionRecordList = new ArrayList<>();
 
         LocalDate newDay = LocalDate.now();
         LocalDateTime startDateTime = LocalDateTime.of(newDay, LocalTime.MIN);
@@ -249,37 +292,36 @@ public class RewardDistributionScheduled {
             rewardDistributionRecord.setCreateTime(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
             rewardDistributionRecord.setRewardStatus(RewardDistributionStatusEnum.UNISSUED.getCode());
 
-            rewardDistributionRecord.setRelationAddress(nftMessage.getOldAddress());
+            rewardDistributionRecord.setRelationAddress(nftMessage.getNewAddress());
 
-            rewardDistributionRecordList.add(rewardDistributionRecord);
+            RegionRecommendLog regionRecommendLog = saveRegionRecommendLog(rewardDistributionRecord);
+
+            rewardDistributionRecordMapper.insert(rewardDistributionRecord);
+
+            if (Objects.nonNull(regionRecommendLog)){
+
+                regionRecommendLog.setRewardDistributionRecordId(rewardDistributionRecord.getId());
+                regionRecommendLogMapper.insert(regionRecommendLog);
+            }
+
 
         });
 
-        if (CollectionUtils.isEmpty(rewardDistributionRecordList)) {
-            return;
-        }
-
-        rewardDistributionRecordMapper.insertBatchSomeColumn(rewardDistributionRecordList);
-
-
-        for (RewardDistributionRecord rewardDistributionRecord : rewardDistributionRecordList) {
-            saveRegionRecommendLog(rewardDistributionRecord);
-        }
 
     }
 
-    public void saveRegionRecommendLog(RewardDistributionRecord rewardDistributionRecord) {
+    public RegionRecommendLog saveRegionRecommendLog(RewardDistributionRecord rewardDistributionRecord) {
 
         QueryWrapper<Recommend> recommendQueryWrapper = new QueryWrapper();
         recommendQueryWrapper.eq("wallet_address", rewardDistributionRecord.getWalletAddress());
         Recommend recommend = recommendMapper.selectOne(recommendQueryWrapper);
 
         if (Objects.isNull(recommend)) {
-            return;
+            return null;
         }
 
         if (!recommend.getWalletAddress().equals(recommend.getLeaderWalletAddress())) {
-            return;
+            return null;
         }
 
         QueryWrapper<RegionRecommend> regionRecommendQueryWrapper = new QueryWrapper();
@@ -287,7 +329,7 @@ public class RewardDistributionScheduled {
 
         RegionRecommend regionRecommend = regionRecommendMapper.selectOne(regionRecommendQueryWrapper);
         if (Objects.isNull(regionRecommend)) {
-            return;
+            return null;
         }
 
         QueryWrapper<RegionRecommendLog> regionRecommendLogQueryWrapper = new QueryWrapper();
@@ -295,7 +337,7 @@ public class RewardDistributionScheduled {
 
         RegionRecommendLog regionRecommendLog = regionRecommendLogMapper.selectOne(regionRecommendLogQueryWrapper);
         if (Objects.nonNull(regionRecommendLog)) {
-            return;
+            return null;
         }
 
         regionRecommendLog = new RegionRecommendLog();
@@ -304,13 +346,16 @@ public class RewardDistributionScheduled {
         regionRecommendLog.setRewardNumber(new BigDecimal(rewardDistributionRecord.getRewardNumber()).multiply(new BigDecimal(regionRecommend.getRebateRate())).toString());
         regionRecommendLog.setType(rewardDistributionRecord.getRewardType());
         regionRecommendLog.setTokenId(rewardDistributionRecord.getTokenId());
-        regionRecommendLog.setRewardDistributionRecordId(rewardDistributionRecord.getId());
 
-        regionRecommendLogMapper.insert(regionRecommendLog);
+        BigDecimal reward = new BigDecimal(rewardDistributionRecord.getRewardNumber()).subtract(new BigDecimal(regionRecommendLog.getRewardNumber()));
+
+        rewardDistributionRecord.setRewardNumber(reward.toString());
+
+        return regionRecommendLog;
     }
 
 
-    @Scheduled(cron = "0 0/3 * * * ?")
+    @Scheduled(cron = "0 0/2 * * * ?")
     public void usdtRewardDistribution() {
 
         log.info("usdtRewardDistribution 开始执行");
@@ -331,7 +376,7 @@ public class RewardDistributionScheduled {
 
         for (NftMessage nftMessage : nftMessageList) {
 
-            Map<String, String> rebateMap = getRebateMap(nftMessage.getBuyAddress(), BigDecimal.valueOf(3600L), RebateEnum.USDT.getCode());
+            Map<String, String> rebateMap = getRebateMap(nftMessage.getBuyAddress(), BigDecimal.valueOf(3600L), RebateEnum.USDT.getCode(),nftMessage);
 
             //todo 保存返佣记录
             saveRewardDistributionRecord(rebateMap, nftMessage, RebateEnum.USDT.getCode());

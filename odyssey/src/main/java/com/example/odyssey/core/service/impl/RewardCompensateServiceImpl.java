@@ -23,6 +23,7 @@ import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
@@ -137,61 +138,96 @@ public class RewardCompensateServiceImpl implements RewardCompensateService {
             return rebateMap;
         }
 
-        if (Objects.isNull(nftDailyHoldRecord.getLeaderWalletAddress())) {
-            return rebateMap;
-        }
+        QueryWrapper<SystemConfig> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("`key`","official_wallet_address");
 
-        QueryWrapper<RebateConfig> rebateConfigQueryWrapper = new QueryWrapper();
-        rebateConfigQueryWrapper.eq("address", nftDailyHoldRecord.getLeaderWalletAddress());
-        rebateConfigQueryWrapper.eq("recommend_type", nftDailyHoldRecord.getRecommendType());
-        rebateConfigQueryWrapper.eq("rebate_type", RebateEnum.ODS.getCode());
-        RebateConfig rebateConfig = rebateConfigMapper.selectOne(rebateConfigQueryWrapper);
-
-        if (Objects.isNull(rebateConfig)) {
-            return rebateMap;
-        }
+        SystemConfig systemConfig = systemConfigMapper.selectOne(queryWrapper);
 
         BigDecimal number = new BigDecimal(nftDailyHoldRecord.getNumber());
 
-        if (Objects.nonNull(nftDailyHoldRecord.getFirstRecommendWalletAddress())) {
-            //代表当前用户处在二级
-            if (Objects.isNull(nftDailyHoldRecord.getSecondRecommendWalletAddress())) {
+        //有推荐人，计算返佣
+        if (Objects.nonNull(nftDailyHoldRecord.getRecommendWalletAddress())) {
 
-                BigDecimal first = number.multiply(new BigDecimal(rebateConfig.getFirstRebateRate()));
+            if (Objects.nonNull(nftDailyHoldRecord.getRecommendTime())){
+                //如果 是购买的 空投的 转入的时间在 建立推荐关系之前 不给上层返佣
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                LocalDateTime dateTime = null;
 
-                rebateMap.put(nftDailyHoldRecord.getFirstRecommendWalletAddress(), first.toString());
+                if (Objects.nonNull(nftMessage.getBuyTime())){
+                    //购买的
+                    dateTime = LocalDateTime.parse(nftMessage.getBuyTime(), formatter);
+                }else if (Objects.nonNull(nftMessage.getAirdropTime())){
+                    //空投的
+                    dateTime = LocalDateTime.parse(nftMessage.getAirdropTime(), formatter);
+                }else {
+                    //转入的
+                    dateTime = LocalDateTime.parse(nftMessage.getTransferTime(), formatter);
+                }
+                Long timestamp = dateTime.toEpochSecond(ZoneOffset.UTC) * 1000;
 
-                rebateMap.put(nftDailyHoldRecord.getWalletAddress(), number.subtract(first).toString());
+                if (nftDailyHoldRecord.getRecommendTime() > timestamp){
 
-            } else {
-                BigDecimal first = number.multiply(new BigDecimal(rebateConfig.getThreeRebateRate()));
-                rebateMap.put(nftDailyHoldRecord.getFirstRecommendWalletAddress(), first.toString());
+                    // 还需要转到一个官方钱包 10%
+                    BigDecimal service = number.multiply(new BigDecimal("0.12"));
 
-                BigDecimal second = number.multiply(new BigDecimal(rebateConfig.getSecondRebateRate()));
-                rebateMap.put(nftDailyHoldRecord.getSecondRecommendWalletAddress(), second.toString());
+                    rebateMap.put(systemConfig.getValue(),service.toString());
 
-                rebateMap.put(nftDailyHoldRecord.getWalletAddress(), number.subtract(first).subtract(second).toString());
+                    rebateMap.put(nftDailyHoldRecord.getWalletAddress(), number.subtract(service).toString());
+
+                    return rebateMap;
+                }
+
+            }else {
+
+                return rebateMap;
+            }
+
+            QueryWrapper<RebateConfig> rebateConfigQueryWrapper = new QueryWrapper();
+            rebateConfigQueryWrapper.eq("address", nftDailyHoldRecord.getLeaderWalletAddress());
+            rebateConfigQueryWrapper.eq("recommend_type", nftDailyHoldRecord.getRecommendType());
+            rebateConfigQueryWrapper.eq("rebate_type", RebateEnum.ODS.getCode());
+            RebateConfig rebateConfig = rebateConfigMapper.selectOne(rebateConfigQueryWrapper);
+
+            if (Objects.isNull(rebateConfig)) {
+                return rebateMap;
+            }
+
+            if (Objects.nonNull(nftDailyHoldRecord.getFirstRecommendWalletAddress())) {
+                //代表当前用户处在二级
+                if (Objects.isNull(nftDailyHoldRecord.getSecondRecommendWalletAddress())) {
+
+                    BigDecimal first = number.multiply(new BigDecimal(rebateConfig.getFirstRebateRate()));
+
+                    rebateMap.put(nftDailyHoldRecord.getFirstRecommendWalletAddress(), first.toString());
+
+                    rebateMap.put(nftDailyHoldRecord.getWalletAddress(), number.subtract(first).toString());
+
+                } else {
+                    BigDecimal first = number.multiply(new BigDecimal(rebateConfig.getThreeRebateRate()));
+                    rebateMap.put(nftDailyHoldRecord.getFirstRecommendWalletAddress(), first.toString());
+
+                    BigDecimal second = number.multiply(new BigDecimal(rebateConfig.getSecondRebateRate()));
+                    rebateMap.put(nftDailyHoldRecord.getSecondRecommendWalletAddress(), second.toString());
+
+                    rebateMap.put(nftDailyHoldRecord.getWalletAddress(), number.subtract(first).subtract(second).toString());
+                }
             }
         } else {
-            if (nftDailyHoldRecord.getRecommendType().equals(RecommendEnum.LEADER.getCode())) {
+            //没有推荐人 或者代表当前用户处在一级 不需要进行·返佣
+            if (nftDailyHoldRecord.getRecommendType().equals(RecommendEnum.LEADER.getCode())){
 
                 rebateMap.put(nftDailyHoldRecord.getWalletAddress(), number.toString());
 
-            } else {
-
-                QueryWrapper<SystemConfig> queryWrapper = new QueryWrapper<>();
-                queryWrapper.eq("`key`","official_wallet_address");
-
-                SystemConfig systemConfig = systemConfigMapper.selectOne(queryWrapper);
+            }else {
 
                 BigDecimal service = number.multiply(new BigDecimal("0.12"));
 
-                rebateMap.put(systemConfig.getValue(), service.toString());
+                rebateMap.put(systemConfig.getValue(),service.toString());
 
                 rebateMap.put(nftDailyHoldRecord.getWalletAddress(), number.subtract(service).toString());
             }
-
         }
+
         return rebateMap;
     }
 

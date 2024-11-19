@@ -7,7 +7,7 @@ import lombok.Data;
 @Data
 public class ContractAddress {
 
-    @TableId(type = IdType.INPUT)
+    @TableId(type = IdType.AUTO)
     private Integer id;
     /**
      * 地址 合约地址

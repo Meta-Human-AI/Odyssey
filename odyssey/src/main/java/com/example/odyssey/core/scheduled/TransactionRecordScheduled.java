@@ -147,7 +147,7 @@ public class TransactionRecordScheduled {
                         record.setTime(time);
 
                         transactionRecordMapper.insert(record);
-
+                        nftMessageTransferCmd.setAirdropTime(time);
                     }
 
                 } else {

@@ -16,7 +16,7 @@ import lombok.NoArgsConstructor;
 public class NftMessage {
 
 
-    @TableId(type = IdType.INPUT)
+    @TableId(type = IdType.AUTO)
     private Integer id;
 
     private Long tokenId;
@@ -55,6 +55,10 @@ public class NftMessage {
      * 转入时间
      */
     private String transferTime;
+    /**
+     * 空投时间
+     */
+    private String airdropTime;
     /**
      * 购买时间
      */

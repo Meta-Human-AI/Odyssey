@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 @TableName("`operator`")
 public class Operator {
 
-    @TableId(type = IdType.INPUT)
+    @TableId(type = IdType.AUTO)
     private Integer id;
 
     private String username;

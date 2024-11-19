@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 @TableName("`hotel`")
 public class Hotel {
 
-    @TableId(type = IdType.INPUT)
+    @TableId(type = IdType.AUTO)
     private Integer id;
     /**
      * 名称

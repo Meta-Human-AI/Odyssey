@@ -6,7 +6,9 @@ import com.example.odyssey.bean.SingleResponse;
 import com.example.odyssey.bean.cmd.RecommendCoreCreateCmd;
 import com.example.odyssey.bean.cmd.RecommendCreateCmd;
 import com.example.odyssey.bean.cmd.RecommendListQryCmd;
+import com.example.odyssey.bean.cmd.RecommendQryCmd;
 import com.example.odyssey.bean.dto.RecommendCoreDTO;
+import com.example.odyssey.bean.dto.RecommendDTO;
 import com.example.odyssey.bean.dto.RecommendListDTO;
 import com.example.odyssey.core.service.RecommendService;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -48,6 +50,8 @@ public class RecommendController {
 
         return recommendService.getRecommendCore(recommendCoreCreateCmd);
     }
+
+
     /**
      * 获取推荐列表
      * @param recommendListQryCmd
@@ -61,5 +65,11 @@ public class RecommendController {
         return recommendService.getRecommendList(recommendListQryCmd);
     }
 
-    //todo 统计推荐人数
+    @PostMapping("/info")
+    SingleResponse<RecommendDTO> getRecommend(@RequestBody RecommendQryCmd recommendQryCmd){
+
+        Assert.notNull(recommendQryCmd.getWalletAddress(), "钱包地址不能为空");
+
+        return recommendService.getRecommend(recommendQryCmd);
+    }
 }

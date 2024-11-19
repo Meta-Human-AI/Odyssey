@@ -74,7 +74,7 @@ public class RebateConfigServiceImpl implements RebateConfigService {
         odRebateConfig.setAddress(rebateConfigCreateDefaultCmd.getAddress());
         odRebateConfig.setFirstRebateRate(Objects.isNull(odsFirstRebateRate) ? "0.1" : odsFirstRebateRate.getValue());
         odRebateConfig.setSecondRebateRate(Objects.isNull(odsSecondRebateRate) ? "0.1" : odsSecondRebateRate.getValue());
-        odRebateConfig.setThreeRebateRate(Objects.isNull(odsThreeRebateRate) ? "0.2" : odsThreeRebateRate.getValue());
+        odRebateConfig.setThreeRebateRate(Objects.isNull(odsThreeRebateRate) ? "0.02" : odsThreeRebateRate.getValue());
         odRebateConfig.setRecommendType(RecommendEnum.NORMAL.getCode());
 
         odRebateConfig.setRebateType(RebateEnum.ODS.getCode());
@@ -83,7 +83,7 @@ public class RebateConfigServiceImpl implements RebateConfigService {
         usdtRebateConfig.setAddress(rebateConfigCreateDefaultCmd.getAddress());
         usdtRebateConfig.setFirstRebateRate(Objects.isNull(usdtFirstRebateRate) ? "0.1" : usdtFirstRebateRate.getValue());
         usdtRebateConfig.setSecondRebateRate(Objects.isNull(usdtSecondRebateRate) ? "0.1" : usdtSecondRebateRate.getValue());
-        usdtRebateConfig.setThreeRebateRate(Objects.isNull(usdtThreeRebateRate) ? "0.2" : usdtThreeRebateRate.getValue());
+        usdtRebateConfig.setThreeRebateRate(Objects.isNull(usdtThreeRebateRate) ? "0.02" : usdtThreeRebateRate.getValue());
         usdtRebateConfig.setRecommendType(RecommendEnum.NORMAL.getCode());
         usdtRebateConfig.setRebateType(RebateEnum.USDT.getCode());
 

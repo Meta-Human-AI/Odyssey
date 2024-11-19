@@ -6,6 +6,7 @@ import com.example.odyssey.bean.MultiResponse;
 import com.example.odyssey.bean.SingleResponse;
 import com.example.odyssey.bean.cmd.*;
 import com.example.odyssey.bean.dto.RecommendCoreDTO;
+import com.example.odyssey.bean.dto.RecommendDTO;
 import com.example.odyssey.bean.dto.RecommendListDTO;
 import com.example.odyssey.common.RebateEnum;
 import com.example.odyssey.common.RecommendEnum;
@@ -18,6 +19,7 @@ import com.example.odyssey.model.mapper.*;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
+import org.springframework.beans.BeanUtils;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -63,6 +65,9 @@ public class RecommendServiceImpl implements RecommendService {
     @Resource
     NftMessageMapper nftMessageMapper;
 
+    @Resource
+    RegionRecommendMapper regionRecommendMapper;
+
     @Override
     public SingleResponse<RecommendCoreDTO> getRecommendCore(RecommendCoreCreateCmd recommendCoreCreateCmd) {
 
@@ -80,6 +85,7 @@ public class RecommendServiceImpl implements RecommendService {
             recommendCreateCmd.setWalletAddress(recommendCoreCreateCmd.getWalletAddress());
             recommendCreateCmd.setRecommendType(RecommendEnum.NORMAL.getCode());
             recommendCreateCmd.setLeaderWalletAddress(recommendCoreCreateCmd.getWalletAddress());
+            recommendCreateCmd.setRecommendTime(0L);
             recommend = recommendCmd.createRecommend(recommendCreateCmd);
 
             recommendCoreDTO.setRecommendWalletAddress("");
@@ -188,19 +194,65 @@ public class RecommendServiceImpl implements RecommendService {
     @Override
     public SingleResponse recommend(RecommendCreateCmd recommendCreateCmd) {
 
-        //推荐码
-        QueryWrapper<RecommendCoreLog> recommendCoreLogQueryWrapper = new QueryWrapper<>();
-        recommendCoreLogQueryWrapper.eq("recommend_core", recommendCreateCmd.getRecommendCore());
-        RecommendCoreLog recommendCoreLog = recommendCoreLogMapper.selectOne(recommendCoreLogQueryWrapper);
+        QueryWrapper<RegionRecommend> regionRecommendQueryWrapper = new QueryWrapper();
+        regionRecommendQueryWrapper.eq("region_address", recommendCreateCmd.getWalletAddress());
 
-        if (Objects.isNull(recommendCoreLog)) {
-            return SingleResponse.buildFailure("推荐码不存在");
+        Long regionRecommendCount = regionRecommendMapper.selectCount(regionRecommendQueryWrapper);
+        if (regionRecommendCount > 0) {
+            return SingleResponse.buildFailure("该地址不能被推荐");
         }
 
-        //推荐人
-        QueryWrapper<Recommend> recommendQueryWrapper = new QueryWrapper<>();
-        recommendQueryWrapper.eq("wallet_address", recommendCoreLog.getWalletAddress());
-        Recommend oldRecommend = recommendMapper.selectOne(recommendQueryWrapper);
+
+        Recommend oldRecommend = null;
+
+        if (Objects.nonNull(recommendCreateCmd.getRecommendWalletAddress())) {
+
+            QueryWrapper<RegionRecommend> regionRecommendWalletAddressQueryWrapper = new QueryWrapper();
+            regionRecommendWalletAddressQueryWrapper.eq("region_address", recommendCreateCmd.getWalletAddress());
+
+            Long regionRecommendWalletAddressCount = regionRecommendMapper.selectCount(regionRecommendQueryWrapper);
+            if (regionRecommendWalletAddressCount > 0) {
+                return SingleResponse.buildFailure("该地址不能推荐别人");
+            }
+
+            //推荐人
+            QueryWrapper<Recommend> recommendQueryWrapper = new QueryWrapper<>();
+            recommendQueryWrapper.eq("wallet_address", recommendCreateCmd.getRecommendWalletAddress());
+            oldRecommend = recommendMapper.selectOne(recommendQueryWrapper);
+
+        } else {
+
+            //推荐码
+            QueryWrapper<RecommendCoreLog> recommendCoreLogQueryWrapper = new QueryWrapper<>();
+            recommendCoreLogQueryWrapper.eq("recommend_core", recommendCreateCmd.getRecommendCore());
+            RecommendCoreLog recommendCoreLog = recommendCoreLogMapper.selectOne(recommendCoreLogQueryWrapper);
+
+            if (Objects.isNull(recommendCoreLog)) {
+                return SingleResponse.buildFailure("推荐码不存在");
+            }
+
+            QueryWrapper<RegionRecommend> regionrecommendCoreQueryWrapper = new QueryWrapper();
+            regionrecommendCoreQueryWrapper.eq("region_address", recommendCoreLog.getWalletAddress());
+
+            Long regionrecommendCoreCount = regionRecommendMapper.selectCount(regionRecommendQueryWrapper);
+            if (regionrecommendCoreCount > 0) {
+                return SingleResponse.buildFailure("该地址不能推荐别人");
+            }
+            //推荐人
+            QueryWrapper<Recommend> recommendQueryWrapper = new QueryWrapper<>();
+            recommendQueryWrapper.eq("wallet_address", recommendCoreLog.getWalletAddress());
+            oldRecommend = recommendMapper.selectOne(recommendQueryWrapper);
+
+
+            QueryWrapper<NftMessage> nftMessageQueryWrapper = new QueryWrapper<>();
+            nftMessageQueryWrapper.eq("buy_address", recommendCreateCmd.getWalletAddress());
+
+            Long count = nftMessageMapper.selectCount(nftMessageQueryWrapper);
+            if (count == 0) {
+                return SingleResponse.buildFailure("请先购买NFT");
+            }
+        }
+
 
         if (Objects.isNull(oldRecommend)) {
             return SingleResponse.buildFailure("推荐人不存在");
@@ -210,13 +262,6 @@ public class RecommendServiceImpl implements RecommendService {
             return SingleResponse.buildFailure("不能循环推荐");
         }
 
-        QueryWrapper<NftMessage> nftMessageQueryWrapper = new QueryWrapper<>();
-        nftMessageQueryWrapper.eq("wallet_address", recommendCreateCmd.getWalletAddress());
-
-        Long count = nftMessageMapper.selectCount(nftMessageQueryWrapper);
-        if (count == 0) {
-            return SingleResponse.buildFailure("请先购买NFT");
-        }
 
         //被推荐人
         QueryWrapper<Recommend> queryWrapper = new QueryWrapper<>();
@@ -241,9 +286,15 @@ public class RecommendServiceImpl implements RecommendService {
             RecommendUpdateCmd recommendUpdateCmd = new RecommendUpdateCmd();
             recommendUpdateCmd.setId(recommend.getId());
             recommendUpdateCmd.setWalletAddress(recommendCreateCmd.getWalletAddress());
-            recommendUpdateCmd.setRecommendWalletAddress(recommendCoreLog.getWalletAddress());
+            recommendUpdateCmd.setRecommendWalletAddress(oldRecommend.getWalletAddress());
             recommendUpdateCmd.setRecommendCore(recommendCreateCmd.getRecommendCore());
             recommendUpdateCmd.setLeaderWalletAddress(oldRecommend.getLeaderWalletAddress());
+
+            if (Objects.isNull(recommendCreateCmd.getRecommendTime())){
+                recommendUpdateCmd.setRecommendTime(System.currentTimeMillis());
+            }else {
+                recommendUpdateCmd.setRecommendTime(recommendCreateCmd.getRecommendTime());
+            }
 
             if (Objects.isNull(oldRecommend.getFirstRecommendWalletAddress()) || Objects.isNull(oldRecommend.getSecondRecommendWalletAddress())) {
                 if (Objects.isNull(oldRecommend.getFirstRecommendWalletAddress())) {
@@ -267,9 +318,12 @@ public class RecommendServiceImpl implements RecommendService {
             rebateConfigMapper.delete(rebateConfigQueryWrapper);
         } else {
 
-            recommendCreateCmd.setRecommendWalletAddress(recommendCoreLog.getWalletAddress());
+            recommendCreateCmd.setRecommendWalletAddress(oldRecommend.getWalletAddress());
             recommendCreateCmd.setRecommendCore(recommendCreateCmd.getRecommendCore());
             recommendCreateCmd.setLeaderWalletAddress(oldRecommend.getLeaderWalletAddress());
+            if (Objects.isNull(recommendCreateCmd.getRecommendTime())){
+                recommendCreateCmd.setRecommendTime(System.currentTimeMillis());
+            }
 
             if (Objects.isNull(oldRecommend.getFirstRecommendWalletAddress()) || Objects.isNull(oldRecommend.getSecondRecommendWalletAddress())) {
                 if (Objects.isNull(oldRecommend.getFirstRecommendWalletAddress())) {
@@ -457,11 +511,33 @@ public class RecommendServiceImpl implements RecommendService {
             RecommendListDTO recommendListDTO = new RecommendListDTO();
             recommendListDTO.setWalletAddress(recommend.getWalletAddress());
 
+            if (recommend.getRecommendType().equals(RecommendEnum.LEADER.getCode())){
+                recommendListDTO.setLeader(Boolean.TRUE);
+            }else {
+                recommendListDTO.setLeader(Boolean.FALSE);
+            }
             getRecommendList(recommendListDTO, recommend.getWalletAddress());
             recommendList.add(recommendListDTO);
         }
 
         return MultiResponse.of(recommendList);
+    }
+
+    @Override
+    public SingleResponse<RecommendDTO> getRecommend(RecommendQryCmd recommendQryCmd) {
+
+        QueryWrapper<Recommend> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("wallet_address", recommendQryCmd.getWalletAddress());
+        Recommend recommend = recommendMapper.selectOne(queryWrapper);
+
+        if (Objects.isNull(recommend)) {
+            return SingleResponse.buildSuccess();
+        }
+
+        RecommendDTO recommendDTO = new RecommendDTO();
+        BeanUtils.copyProperties(recommend, recommendDTO);
+
+        return SingleResponse.of(recommendDTO);
     }
 
 

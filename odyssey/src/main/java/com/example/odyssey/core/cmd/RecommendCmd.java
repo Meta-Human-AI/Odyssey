@@ -3,6 +3,7 @@ package com.example.odyssey.core.cmd;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.example.odyssey.bean.cmd.RecommendCreateCmd;
 import com.example.odyssey.bean.cmd.RecommendUpdateCmd;
+import com.example.odyssey.common.RecommendEnum;
 import com.example.odyssey.core.service.RebateConfigService;
 import com.example.odyssey.model.entity.Recommend;
 import com.example.odyssey.model.mapper.*;
@@ -13,6 +14,7 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
@@ -87,6 +89,7 @@ public class RecommendCmd {
             recommend.setLeaderWalletAddress(recommendCreateCmd.getLeaderWalletAddress());
             recommend.setWalletAddress(recommendCreateCmd.getWalletAddress());
             recommend.setRecommendWalletAddress(recommendCreateCmd.getRecommendWalletAddress());
+            recommend.setRecommendTime(recommendCreateCmd.getRecommendTime());
 
             try {
                 recommendMapper.insert(recommend);
@@ -148,16 +151,54 @@ public class RecommendCmd {
             recommend.setLeaderWalletAddress(recommendUpdateCmd.getLeaderWalletAddress());
             recommend.setWalletAddress(recommendUpdateCmd.getWalletAddress());
             recommend.setRecommendWalletAddress(recommendUpdateCmd.getRecommendWalletAddress());
+            recommend.setRecommendTime(recommendUpdateCmd.getRecommendTime());
 
             try {
                 recommendMapper.updateById(recommend);
                 log.info("updateRecommend 更新游客推荐记录成功, walletAddress: {}", recommendUpdateCmd.getWalletAddress());
+
+
+                //更新下级
+                QueryWrapper<Recommend> chirdRecommendQueryWrapper = new QueryWrapper<>();
+                chirdRecommendQueryWrapper.eq("first_recommend_wallet_address", recommend.getWalletAddress());
+
+                List<Recommend> recommends = recommendMapper.selectList(chirdRecommendQueryWrapper);
+                for (Recommend childRecommend : recommends) {
+
+                    //处于第三级 修改所有leader
+                    childRecommend.setLeaderWalletAddress(recommend.getLeaderWalletAddress());
+
+                    if (Objects.nonNull(recommend.getFirstRecommendWalletAddress())){
+
+                        if (Objects.isNull(recommend.getSecondRecommendWalletAddress())) {
+                            //处于第二级 修改推荐类型
+                            if (Objects.isNull(childRecommend.getSecondRecommendWalletAddress())){
+
+                                childRecommend.setFirstRecommendWalletAddress(recommend.getFirstRecommendWalletAddress());
+                                childRecommend.setSecondRecommendWalletAddress(recommend.getWalletAddress());
+                                childRecommend.setRecommendType(recommend.getRecommendType());
+                            }
+
+                        }else {
+                                //第三级
+                            if (Objects.isNull(childRecommend.getSecondRecommendWalletAddress())){
+
+                                childRecommend.setFirstRecommendWalletAddress(recommend.getSecondRecommendWalletAddress());
+                                childRecommend.setSecondRecommendWalletAddress(recommend.getWalletAddress());
+                            }
+                        }
+                    }
+
+                    recommendMapper.updateById(childRecommend);
+                }
+
                 return recommend;
             } catch (DuplicateKeyException e) {
                 // 处理并发插入导致的唯一索引冲突
                 log.warn("updateRecommend 并发更新游客推荐记录, walletAddress: {}", recommendUpdateCmd.getWalletAddress());
                 throw new RuntimeException("更新钱包地址信息错误");
             }
+
 
         } catch (InterruptedException e) {
             log.error("updateRecommend 获取锁被中断, walletAddress: {}", recommendUpdateCmd.getWalletAddress(), e);

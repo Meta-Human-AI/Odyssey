@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 @TableName("`email`")
 public class Email {
 
-    @TableId(type = IdType.INPUT)
+    @TableId(type = IdType.AUTO)
     private Integer id;
 
 

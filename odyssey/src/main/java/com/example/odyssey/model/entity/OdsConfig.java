@@ -7,7 +7,7 @@ import lombok.Data;
 @Data
 public class OdsConfig {
 
-    @TableId(type = IdType.INPUT)
+    @TableId(type = IdType.AUTO)
     private Integer id;
     /**
      * ods 等级类型 OL OS OA OB

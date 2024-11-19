@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 @TableName("recommend_core_log")
 public class RecommendCoreLog {
 
-    @TableId(type = IdType.INPUT)
+    @TableId(type = IdType.AUTO)
     private Integer id;
     /**
      * 推荐人钱包地址

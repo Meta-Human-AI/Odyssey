@@ -8,7 +8,7 @@ import lombok.Data;
 @Data
 public class BscScanAccountTransaction {
 
-    @TableId(type = IdType.INPUT)
+    @TableId(type = IdType.AUTO)
     private Integer id;
 
     private Long blockNumber;

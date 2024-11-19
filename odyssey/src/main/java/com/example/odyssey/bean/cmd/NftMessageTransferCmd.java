@@ -24,6 +24,10 @@ public class NftMessageTransferCmd {
      * 转入时间
      */
     private String transferTime;
+    /**
+     * 空投时间
+     */
+    private String airdropTime;
 
     private Long tokenId;
 }

@@ -14,6 +14,8 @@ public interface OrderService {
 
     SingleResponse examineOrder(OrderExamineCmd orderExamineCmd);
 
+    SingleResponse orderEmailAuth(OrderEmailAuthCmd orderEmailAuthCmd);
+
     SingleResponse appealOrder(OrderAppealCreateCmd orderAppealCreateCmd);
 
     SingleResponse cancelAppealOrder(OrderAppealCancelCmd orderAppealCancelCmd);

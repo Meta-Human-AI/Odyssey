@@ -38,4 +38,8 @@ public class RecommendCreateCmd {
      * 领导钱包地址
      */
     private String leaderWalletAddress;
+    /**
+     * 推荐时间
+     */
+    private Long recommendTime;
 }

@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 @TableName("`city`")
 public class City {
 
-    @TableId(type = IdType.INPUT)
+    @TableId(type = IdType.AUTO)
     private Integer id;
 
     private Long state;

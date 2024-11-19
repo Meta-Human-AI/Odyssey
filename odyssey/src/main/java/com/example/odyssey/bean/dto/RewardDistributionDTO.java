@@ -44,4 +44,6 @@ public class RewardDistributionDTO {
      * 奖励时间
      */
     private String rewardTime;
+
+    private String hash;
 }

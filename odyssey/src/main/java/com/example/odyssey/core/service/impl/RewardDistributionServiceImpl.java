@@ -10,14 +10,17 @@ import com.example.odyssey.bean.cmd.RewardDistributionListQryCmd;
 import com.example.odyssey.bean.cmd.RewardDistributionTotalQryCmd;
 import com.example.odyssey.bean.dto.RewardDistributionDTO;
 import com.example.odyssey.bean.dto.RewardDistributionTotalDTO;
+import com.example.odyssey.common.ActionTypeEnum;
 import com.example.odyssey.common.RebateEnum;
 import com.example.odyssey.common.RewardDistributionStatusEnum;
 import com.example.odyssey.core.service.RewardDistributionService;
 import com.example.odyssey.model.entity.OdsConfig;
 import com.example.odyssey.model.entity.RewardDistributionRecord;
+import com.example.odyssey.model.entity.TransactionRecord;
 import com.example.odyssey.model.mapper.OdsConfigMapper;
 import com.example.odyssey.model.mapper.RebateConfigMapper;
 import com.example.odyssey.model.mapper.RewardDistributionRecordMapper;
+import com.example.odyssey.model.mapper.TransactionRecordMapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,6 +39,9 @@ import java.util.stream.Collectors;
 public class RewardDistributionServiceImpl implements RewardDistributionService {
     @Resource
     RewardDistributionRecordMapper rewardDistributionRecordMapper;
+
+    @Resource
+    TransactionRecordMapper transactionRecordMapper;
 
 
     @Override
@@ -71,6 +77,17 @@ public class RewardDistributionServiceImpl implements RewardDistributionService 
             RewardDistributionDTO rewardDistributionDTO = new RewardDistributionDTO();
             BeanUtils.copyProperties(rewardDistributionRecord, rewardDistributionDTO);
 
+            if (rewardDistributionRecord.getRewardType().equals(RebateEnum.USDT.getCode())){
+
+                QueryWrapper<TransactionRecord> transactionRecordQueryWrapper = new QueryWrapper<>();
+                transactionRecordQueryWrapper.eq("token_id",rewardDistributionRecord.getTokenId());
+                transactionRecordQueryWrapper.eq("action", ActionTypeEnum.BUY.getCode());
+                TransactionRecord transactionRecord = transactionRecordMapper.selectOne(transactionRecordQueryWrapper);
+
+                if (Objects.nonNull(transactionRecord)){
+                    rewardDistributionDTO.setHash(transactionRecord.getTransactionHash());
+                }
+            }
             rewardDistributionDTOList.add(rewardDistributionDTO);
         }
 

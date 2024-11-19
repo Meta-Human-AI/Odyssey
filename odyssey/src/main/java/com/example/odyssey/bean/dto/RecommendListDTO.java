@@ -11,6 +11,8 @@ public class RecommendListDTO {
      */
     private String walletAddress;
 
+    private Boolean leader;
+
 
     private List<RecommendListDTO> recommendList;
 

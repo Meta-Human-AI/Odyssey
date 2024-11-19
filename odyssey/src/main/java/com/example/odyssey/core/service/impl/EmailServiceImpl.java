@@ -74,7 +74,7 @@ public class EmailServiceImpl implements EmailService {
     @Override
     public SingleResponse sendEmail(EmailSendCmd emailSendCmd) {
 
-        QueryWrapper<SystemConfig> systemQueryWrapper = new QueryWrapper<>();
+//        QueryWrapper<SystemConfig> systemQueryWrapper = new QueryWrapper<>();
 
 //        systemQueryWrapper.eq("`key`", "url");
 //

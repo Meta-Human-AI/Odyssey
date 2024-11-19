@@ -102,6 +102,8 @@ public class NftDailyHoldRecordScheduled {
                     nftDailyHoldRecord.setSecondRecommendWalletAddress(recommend.getSecondRecommendWalletAddress());
                     nftDailyHoldRecord.setRecommendType(recommend.getRecommendType());
                     nftDailyHoldRecord.setLeaderWalletAddress(recommend.getLeaderWalletAddress());
+                    nftDailyHoldRecord.setRecommendWalletAddress(recommend.getRecommendWalletAddress());
+                    nftDailyHoldRecord.setRecommendTime(recommend.getRecommendTime());
                 }
 
                 nftDailyHoldRecordMapper.insert(nftDailyHoldRecord);

@@ -6,6 +6,7 @@ import com.example.odyssey.bean.SingleResponse;
 import com.example.odyssey.bean.cmd.*;
 import com.example.odyssey.bean.dto.OrderAppealDTO;
 import com.example.odyssey.bean.dto.OrderDTO;
+import com.example.odyssey.core.service.EmailService;
 import com.example.odyssey.core.service.OrderService;
 import com.example.odyssey.util.EmailUtil;
 import com.example.odyssey.util.MinioUtils;
@@ -27,7 +28,6 @@ public class OrderController {
     MinioUtils minioUtils;
     @Resource
     OrderService orderService;
-
     /**
      * 创建酒店订单
      * @param orderCreateCmd
@@ -113,5 +113,15 @@ public class OrderController {
     MultiResponse<OrderAppealDTO> listOrderAppeal(@RequestBody OrderAppealListQryCmd orderAppealListQryCmd) {
         Assert.notNull(orderAppealListQryCmd.getOrderId(),"订单id不能为空");
         return orderService.listOrderAppeal(orderAppealListQryCmd);
+    }
+
+    /**
+     * 重新发送验证码
+     * @return
+     */
+    @PostMapping("/email/auth")
+    SingleResponse orderEmailAuth(@RequestBody OrderEmailAuthCmd orderEmailAuthCmd){
+        Assert.notNull(orderEmailAuthCmd.getOrderId(),"订单id不能为空");
+        return orderService.orderEmailAuth(orderEmailAuthCmd);
     }
 }

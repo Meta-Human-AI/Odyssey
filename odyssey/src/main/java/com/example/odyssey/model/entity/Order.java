@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 @TableName("`order`")
 public class Order {
 
-    @TableId(type = IdType.INPUT)
+    @TableId(type = IdType.AUTO)
     private Integer id;
     /**
      * 钱包地址

@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -85,7 +86,7 @@ public class OrderServiceImpl implements OrderService {
                 order.setCreateTime(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
                 orderMapper.insert(order);
 
-                //todo 发送邮件
+//                //todo 发送邮件
                 EmailSendCmd emailSendCmd = new EmailSendCmd();
                 emailSendCmd.setEmail(orderCreateCmd.getEmail());
                 emailSendCmd.setOrderId(order.getId());
@@ -104,7 +105,8 @@ public class OrderServiceImpl implements OrderService {
                     blockadeDay = Integer.valueOf(systemConfig.getValue());
                 }
 
-                nftMessage.setBlockadeTime(System.currentTimeMillis() + blockadeDay * 24 * 60 * 60 * 1000);
+
+                nftMessage.setBlockadeTime(System.currentTimeMillis() + Duration.ofDays(blockadeDay).toMillis());
 
                 nftMessageMapper.updateById(nftMessage);
 
@@ -178,7 +180,7 @@ public class OrderServiceImpl implements OrderService {
                     return SingleResponse.buildFailure("订单不存在");
                 }
 
-                if (order.getStatus() != OrderStatusEnum.EXAMINE.getCode()) {
+                if (!Objects.equals(order.getStatus(), OrderStatusEnum.EXAMINE.getCode())) {
                     return SingleResponse.buildFailure("订单状态不正确");
                 }
 
@@ -198,6 +200,32 @@ public class OrderServiceImpl implements OrderService {
             }
         }
         return SingleResponse.buildFailure("审核订单失败");
+    }
+
+    @Override
+    public SingleResponse orderEmailAuth(OrderEmailAuthCmd orderEmailAuthCmd) {
+
+        Order order = orderMapper.selectById(orderEmailAuthCmd.getOrderId());
+        if (Objects.isNull(order)){
+            return SingleResponse.buildFailure("订单不存在");
+        }
+
+        if (!Objects.equals(order.getStatus(), OrderStatusEnum.AUTHENTICATION.getCode())) {
+            return SingleResponse.buildFailure("订单状态不正确");
+        }
+
+        if (Objects.isNull(order.getEmail())){
+            return SingleResponse.buildFailure("邮箱不存在");
+        }
+
+        //todo 发送邮件
+        EmailSendCmd emailSendCmd = new EmailSendCmd();
+        emailSendCmd.setEmail(order.getEmail());
+        emailSendCmd.setOrderId(order.getId());
+
+        emailService.sendEmail(emailSendCmd);
+
+        return SingleResponse.buildSuccess();
     }
 
     @Override
@@ -221,7 +249,7 @@ public class OrderServiceImpl implements OrderService {
             return SingleResponse.buildFailure("申诉订单不存在");
         }
 
-        if (orderAppeal.getStatus() != OrderAppealStatusEnum.PENDING.getCode()) {
+        if (!Objects.equals(orderAppeal.getStatus(), OrderAppealStatusEnum.PENDING.getCode())) {
             return SingleResponse.buildFailure("申诉订单状态不正确");
         }
 
@@ -241,7 +269,7 @@ public class OrderServiceImpl implements OrderService {
             return SingleResponse.buildFailure("申诉订单不存在");
         }
 
-        if (orderAppeal.getStatus() != OrderAppealStatusEnum.PENDING.getCode()) {
+        if (!Objects.equals(orderAppeal.getStatus(), OrderAppealStatusEnum.PENDING.getCode())) {
             return SingleResponse.buildFailure("申诉订单状态不正确");
         }
 
@@ -261,7 +289,7 @@ public class OrderServiceImpl implements OrderService {
             return SingleResponse.buildFailure("订单不存在");
         }
 
-        if (order.getStatus() != OrderStatusEnum.PASS.getCode()) {
+        if (!Objects.equals(order.getStatus(), OrderStatusEnum.PASS.getCode())) {
             return SingleResponse.buildFailure("订单状态不正确");
         }
 

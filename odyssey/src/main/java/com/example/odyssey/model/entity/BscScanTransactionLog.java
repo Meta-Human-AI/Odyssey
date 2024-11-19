@@ -8,7 +8,7 @@ import lombok.Data;
 @Data
 public class BscScanTransactionLog {
 
-    @TableId(type = IdType.INPUT)
+    @TableId(type = IdType.AUTO)
     private Integer id;
 
     private String transactionHash;

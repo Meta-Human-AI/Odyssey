@@ -35,5 +35,10 @@ public class NftMessageListQryCmd extends PageQuery {
      */
     private String city;
 
+    /**
+     * 是否是空投
+     */
+    private Boolean airdrop;
+
 
 }

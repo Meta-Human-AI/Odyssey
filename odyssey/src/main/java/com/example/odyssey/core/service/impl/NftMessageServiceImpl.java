@@ -118,10 +118,9 @@ public class NftMessageServiceImpl implements NftMessageService {
                 count++;
             }
 
-
         }
 
-        rewardDistributionScheduled.usdtRewardDistribution();
+    //    rewardDistributionScheduled.usdtRewardDistribution();
 
         return SingleResponse.buildSuccess();
     }
@@ -217,6 +216,10 @@ public class NftMessageServiceImpl implements NftMessageService {
             nftMessage.setTransferTime(nftMessageTransferCmd.getTransferTime());
         }
 
+        if (Objects.nonNull(nftMessageTransferCmd.getAirdropTime())){
+            nftMessage.setAirdropTime(nftMessageTransferCmd.getAirdropTime());
+        }
+
         nftMessageMapper.updateById(nftMessage);
         return SingleResponse.buildSuccess();
     }
@@ -251,6 +254,10 @@ public class NftMessageServiceImpl implements NftMessageService {
 
         if (Objects.nonNull(nftMessageListQryCmd.getCity())) {
             queryWrapper.eq("city", nftMessageListQryCmd.getCity());
+        }
+
+        if (Objects.nonNull(nftMessageListQryCmd.getAirdrop()) && nftMessageListQryCmd.getAirdrop()){
+            queryWrapper.isNull("buy_address");
         }
 
         queryWrapper.orderByAsc("token_id");

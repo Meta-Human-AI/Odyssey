@@ -18,7 +18,7 @@ import lombok.NoArgsConstructor;
 @TableName("reward_distribution_record")
 public class RewardDistributionRecord {
 
-    @TableId(type = IdType.INPUT)
+    @TableId(type = IdType.AUTO)
     private Integer id;
 
     /**
