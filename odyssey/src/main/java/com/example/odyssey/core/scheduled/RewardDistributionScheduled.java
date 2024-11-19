@@ -17,10 +17,7 @@ import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.SimpleDateFormat;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.ZoneOffset;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
@@ -175,7 +172,9 @@ public class RewardDistributionScheduled {
                     //转入的
                     dateTime = LocalDateTime.parse(nftMessage.getTransferTime(), formatter);
                 }
-                Long timestamp = dateTime.toEpochSecond(ZoneOffset.UTC) * 1000;
+                Long timestamp = dateTime.atZone(ZoneId.systemDefault())
+                        .toInstant()
+                        .toEpochMilli();
 
                 if (rebateType.equals(RebateEnum.USDT.getCode())) {
 
@@ -368,6 +367,7 @@ public class RewardDistributionScheduled {
 
         QueryWrapper<NftMessage> nftMessageQueryWrapper = new QueryWrapper<>();
         nftMessageQueryWrapper.isNotNull("buy_address");
+
         if (Objects.nonNull(rewardDistributionRecord)) {
             nftMessageQueryWrapper.ge("token_id", rewardDistributionRecord.getTokenId());
         }
