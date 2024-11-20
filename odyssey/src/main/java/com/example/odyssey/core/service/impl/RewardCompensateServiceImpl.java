@@ -4,9 +4,11 @@ import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.example.odyssey.bean.SingleResponse;
 import com.example.odyssey.bean.cmd.OdsCompensateCmd;
+import com.example.odyssey.bean.cmd.RecalculateOdsRewardsByDateRangeCmd;
 import com.example.odyssey.common.RebateEnum;
 import com.example.odyssey.common.RecommendEnum;
 import com.example.odyssey.common.RewardDistributionStatusEnum;
+import com.example.odyssey.core.cmd.NftRewardRecalculateCmd;
 import com.example.odyssey.core.scheduled.RewardDistributionScheduled;
 import com.example.odyssey.core.service.RewardCompensateService;
 import com.example.odyssey.model.entity.*;
@@ -44,6 +46,8 @@ public class RewardCompensateServiceImpl implements RewardCompensateService {
 
     @Resource
     RegionRecommendLogMapper regionRecommendLogMapper;
+    @Resource
+    NftRewardRecalculateCmd nftRewardRecalculateCmd;
 
     @Override
     public SingleResponse compensateOdsReward(OdsCompensateCmd odsCompensateCmd) {
@@ -89,6 +93,24 @@ public class RewardCompensateServiceImpl implements RewardCompensateService {
         return SingleResponse.buildSuccess();
 
     }
+
+    @Override
+    public SingleResponse recalculateAllOdsRewards() {
+
+        nftRewardRecalculateCmd.recalculateAllOdsRewards();
+
+        return SingleResponse.buildSuccess();
+    }
+
+    @Override
+    public SingleResponse recalculateOdsRewardsByDateRange(RecalculateOdsRewardsByDateRangeCmd recalculateOdsRewardsByDateRangeCmd) {
+
+        nftRewardRecalculateCmd.recalculateOdsRewardsByDateRange(recalculateOdsRewardsByDateRangeCmd.getStartDate(), recalculateOdsRewardsByDateRangeCmd.getEndDate());
+
+        return SingleResponse.buildSuccess();
+    }
+
+
 
 
     public static void main(String[] args) {

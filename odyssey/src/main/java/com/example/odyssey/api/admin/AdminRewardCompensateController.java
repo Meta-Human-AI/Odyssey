@@ -2,12 +2,10 @@ package com.example.odyssey.api.admin;
 
 import com.example.odyssey.bean.SingleResponse;
 import com.example.odyssey.bean.cmd.OdsCompensateCmd;
+import com.example.odyssey.bean.cmd.RecalculateOdsRewardsByDateRangeCmd;
 import com.example.odyssey.core.service.RewardCompensateService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 
@@ -26,5 +24,20 @@ public class AdminRewardCompensateController {
     public SingleResponse compensateOdsReward(@RequestBody OdsCompensateCmd odsCompensateCmd) {
 
         return rewardCompensateService.compensateOdsReward(odsCompensateCmd);
+    }
+    /**
+     * 重新计算所有ODS奖励
+     */
+    @GetMapping("/recalculate/all/ods/rewards")
+    SingleResponse recalculateAllOdsRewards(){
+        return rewardCompensateService.recalculateAllOdsRewards();
+    }
+
+    /**
+     * 重新计算指定日期范围内的ODS奖励
+     */
+    @PostMapping("/recalculate/ods/rewards/by/date/range")
+    SingleResponse recalculateOdsRewardsByDateRange(@RequestBody RecalculateOdsRewardsByDateRangeCmd recalculateOdsRewardsByDateRangeCmd){
+        return rewardCompensateService.recalculateOdsRewardsByDateRange(recalculateOdsRewardsByDateRangeCmd);
     }
 }
