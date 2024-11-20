@@ -52,69 +52,95 @@ public class RewardDistributionScheduled {
      */
     @Scheduled(cron = "0 0 0 * * ?")
     public void odsRewardDistribution() {
-
-        log.info("rewardDistribution 开始执行");
+        log.info("========== ODS奖励发放任务开始 ==========");
+        
         QueryWrapper<OdsConfig> odsConfigQueryWrapper = new QueryWrapper();
-
         List<OdsConfig> odsConfigList = odsConfigMapper.selectList(odsConfigQueryWrapper);
         if (odsConfigList.isEmpty()) {
-            log.info("rewardDistribution 结束执行，没有配置");
+            log.info("没有找到ODS配置，任务结束");
             return;
         }
+        log.info("找到{}个等级的ODS配置", odsConfigList.size());
 
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        // 获取计算日期（前天）
         Calendar calendar = Calendar.getInstance();
-        calendar.add(Calendar.DATE, -2); // 减去一天
+        calendar.add(Calendar.DATE, -2);
         calendar.set(Calendar.HOUR_OF_DAY, 23);
         calendar.set(Calendar.MINUTE, 59);
         calendar.set(Calendar.SECOND, 59);
-        calendar.set(Calendar.MILLISECOND, 999);
-
-        String yesterdayMaxTime = sdf.format(calendar.getTime());
+        String yesterdayMaxTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(calendar.getTime());
+        log.info("计算日期: {}", yesterdayMaxTime);
 
         for (OdsConfig odsConfig : odsConfigList) {
-            //todo 计算每个等级 每人获取的ods数量 再根据返佣比例计算返佣数量
-
-            //计算每个等级总数
+            log.info("------ 开始处理{}等级的奖励发放 ------", odsConfig.getType());
+            
             QueryWrapper<NftMessage> nftMessageQueryWrapper = new QueryWrapper();
-            nftMessageQueryWrapper.eq("type", odsConfig.getType());
-            nftMessageQueryWrapper.le("transfer_time",yesterdayMaxTime);
+            nftMessageQueryWrapper.eq("type", odsConfig.getType())
+                                .le("transfer_time", yesterdayMaxTime);
             List<NftMessage> nftMessages = nftMessageMapper.selectList(nftMessageQueryWrapper);
 
             if (nftMessages.isEmpty()) {
-                log.info("rewardDistribution  {}:没有用户", odsConfig.getType());
+                log.info("{}等级没有符合条件的NFT", odsConfig.getType());
                 continue;
             }
+            log.info("找到{}个符合条件的NFT", nftMessages.size());
 
-            //计算每个人获取的ods数量
-            BigDecimal number = BigDecimal.valueOf(odsConfig.getNumber()).divide(BigDecimal.valueOf(nftMessages.size()), 8, RoundingMode.HALF_UP);
+            BigDecimal number = BigDecimal.valueOf(odsConfig.getNumber())
+                    .divide(BigDecimal.valueOf(nftMessages.size()), 8, RoundingMode.HALF_UP);
+            log.info("计算得到每个NFT的基础奖励数量: {}", number);
+
+            int processedCount = 0;
+            Map<String, BigDecimal> totalRewardByType = new HashMap<>(); // 记录不同类型的总奖励
 
             for (NftMessage nftMessage : nftMessages) {
-
                 String address = nftMessage.getNewAddress();
-
                 if (Objects.nonNull(nftMessage.getBuyAddress()) && !nftMessage.getNewAddress().equals(nftMessage.getBuyAddress())) {
                     address = nftMessage.getBuyAddress();
                 }
 
-                Map<String, String> rebateMap = getRebateMap(address, number, RebateEnum.ODS.getCode(),nftMessage);
+                Map<String, String> rebateMap = getRebateMap(address, number, RebateEnum.ODS.getCode(), nftMessage);
+                log.debug("TokenId: {}, 返佣分配: {}", nftMessage.getTokenId(), rebateMap);
+
+                // 统计各类型奖励
+                rebateMap.forEach((k, v) -> {
+                    totalRewardByType.merge(k, new BigDecimal(v), BigDecimal::add);
+                });
 
                 if (Objects.nonNull(nftMessage.getBuyAddress()) && !nftMessage.getNewAddress().equals(nftMessage.getBuyAddress())) {
-
                     String reward = rebateMap.get(address);
-
                     rebateMap.remove(address);
-
                     rebateMap.put(nftMessage.getNewAddress(), reward);
                 }
 
-                //todo 保存返佣记录
                 saveRewardDistributionRecord(rebateMap, nftMessage, RebateEnum.ODS.getCode());
+                processedCount++;
+
+                if (processedCount % 100 == 0) {
+                    log.info("已处理: {}/{}", processedCount, nftMessages.size());
+                }
             }
 
+            log.info("------ {}等级处理完成 ------", odsConfig.getType());
+            log.info("统计信息:");
+            log.info("- 总NFT数量: {}", nftMessages.size());
+            log.info("- 成功处理数量: {}", processedCount);
+            log.info("- 各地址获得的总奖励:");
+            totalRewardByType.forEach((address, reward) -> {
+                log.info("  - {}: {}", address, reward);
+            });
+            
+            // 验证总奖励
+            BigDecimal totalReward = totalRewardByType.values().stream()
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            log.info("- 实际发放总额: {}", totalReward);
+            log.info("- 配置总额: {}", odsConfig.getNumber());
+            
+            if (totalReward.compareTo(BigDecimal.valueOf(odsConfig.getNumber())) > 0) {
+                log.error("警告：实际发放总额超过配置总额！");
+            }
         }
-
-        log.info("rewardDistribution 结束执行");
+        
+        log.info("========== ODS奖励发放任务结束 ==========");
     }
 
     /**

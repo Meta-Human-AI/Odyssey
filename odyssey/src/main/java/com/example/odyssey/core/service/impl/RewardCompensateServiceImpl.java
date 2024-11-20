@@ -20,10 +20,7 @@ import org.springframework.util.StringUtils;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.ZoneOffset;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
@@ -44,6 +41,9 @@ public class RewardCompensateServiceImpl implements RewardCompensateService {
     SystemConfigMapper systemConfigMapper;
     @Resource
     private RebateConfigMapper rebateConfigMapper;
+
+    @Resource
+    RegionRecommendLogMapper regionRecommendLogMapper;
 
     @Override
     public SingleResponse compensateOdsReward(OdsCompensateCmd odsCompensateCmd) {
@@ -163,7 +163,10 @@ public class RewardCompensateServiceImpl implements RewardCompensateService {
                     //转入的
                     dateTime = LocalDateTime.parse(nftMessage.getTransferTime(), formatter);
                 }
-                Long timestamp = dateTime.toEpochSecond(ZoneOffset.UTC) * 1000;
+
+                Long timestamp = dateTime.atZone(ZoneId.systemDefault())
+                        .toInstant()
+                        .toEpochMilli();
 
                 if (nftDailyHoldRecord.getRecommendTime() > timestamp){
 
@@ -233,6 +236,15 @@ public class RewardCompensateServiceImpl implements RewardCompensateService {
 
     public void saveRewardDistributionRecord(Map<String, String> rebateMap, NftDailyHoldRecord nftDailyHoldRecord) {
 
+
+        //判断今天是否已经发放
+        QueryWrapper<RewardDistributionRecord> delateQueryWrapper = new QueryWrapper();
+        delateQueryWrapper.eq("token_id", nftDailyHoldRecord.getTokenId());
+        delateQueryWrapper.eq("reward_type", RebateEnum.ODS.getCode());
+        delateQueryWrapper.eq("create_time", nftDailyHoldRecord.getDate() + "00:00:00");
+
+        rewardDistributionRecordMapper.delete(delateQueryWrapper);
+
         List<RewardDistributionRecord> rewardDistributionRecordList = new ArrayList<>();
 
         //todo 保存返佣记录
@@ -259,19 +271,17 @@ public class RewardCompensateServiceImpl implements RewardCompensateService {
             rewardDistributionRecord.setRewardStatus(RewardDistributionStatusEnum.UNISSUED.getCode());
             rewardDistributionRecord.setRelationAddress(nftDailyHoldRecord.getWalletAddress());
 
-            rewardDistributionRecordList.add(rewardDistributionRecord);
+            RegionRecommendLog regionRecommendLog = rewardDistributionScheduled.saveRegionRecommendLog(rewardDistributionRecord);
+
+            rewardDistributionRecordMapper.insert(rewardDistributionRecord);
+
+            if (Objects.nonNull(regionRecommendLog)){
+
+                regionRecommendLog.setRewardDistributionRecordId(rewardDistributionRecord.getId());
+                regionRecommendLogMapper.insert(regionRecommendLog);
+            }
 
         });
-
-        if (CollectionUtils.isEmpty(rewardDistributionRecordList)) {
-            return;
-        }
-
-        rewardDistributionRecordMapper.insertBatchSomeColumn(rewardDistributionRecordList);
-
-        for (RewardDistributionRecord rewardDistributionRecord : rewardDistributionRecordList) {
-            rewardDistributionScheduled.saveRegionRecommendLog(rewardDistributionRecord);
-        }
 
     }
 

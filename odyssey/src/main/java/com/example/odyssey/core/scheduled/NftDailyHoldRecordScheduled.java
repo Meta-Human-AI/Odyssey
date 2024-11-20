@@ -89,14 +89,23 @@ public class NftDailyHoldRecordScheduled {
                 nftDailyHoldRecord.setTransferTime(nftMessage.getTransferTime());
                 nftDailyHoldRecord.setDate(today);
 
-                QueryWrapper<Recommend> queryWrapper = new QueryWrapper<>();
-
-                if (nftMessage.getNewAddress().equals(nftMessage.getBuyAddress())) {
-                    queryWrapper.eq("wallet_address", nftMessage.getNewAddress());
+                // 根据NFT来源确定查询推荐关系的钱包地址
+                String walletAddress;
+                if (Objects.nonNull(nftMessage.getBuyTime())) {
+                    // 购买的NFT，使用购买地址
+                    walletAddress = nftMessage.getBuyAddress();
+                } else if (Objects.nonNull(nftMessage.getAirdropTime())) {
+                    // 空投的NFT，使用接收空投的地址
+                    walletAddress = nftMessage.getNewAddress();
                 } else {
-                    queryWrapper.eq("wallet_address", nftMessage.getBuyAddress());
+                    // 转入的NFT，使用购买地址（如果有），否则使用当前地址
+                    walletAddress = Objects.nonNull(nftMessage.getBuyAddress()) ? nftMessage.getBuyAddress() : nftMessage.getNewAddress();
                 }
-                Recommend recommend = recommendMapper.selectOne(queryWrapper);
+
+                QueryWrapper<Recommend> recommendWrapper = new QueryWrapper<>();
+                recommendWrapper.eq("wallet_address", walletAddress);
+                Recommend recommend = recommendMapper.selectOne(recommendWrapper);
+
                 if (Objects.nonNull(recommend)) {
                     nftDailyHoldRecord.setFirstRecommendWalletAddress(recommend.getFirstRecommendWalletAddress());
                     nftDailyHoldRecord.setSecondRecommendWalletAddress(recommend.getSecondRecommendWalletAddress());
