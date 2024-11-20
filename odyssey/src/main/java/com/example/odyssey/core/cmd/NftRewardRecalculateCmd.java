@@ -576,8 +576,8 @@ public class NftRewardRecalculateCmd {
 
         QueryWrapper<RewardDistributionRecord> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("reward_type", RebateEnum.ODS.getCode())
-                .ge("create_time", startDate)
-                .le("create_time", endDate)
+                .ge("create_time", startDate + " 00:00:00")
+                .le("create_time", endDate + " 00:00:00")
                 .eq("reward_status", RewardDistributionStatusEnum.UNISSUED.getCode());
         int count = rewardDistributionRecordMapper.delete(queryWrapper);
         log.info("清理了 {} 条旧记录", count);
