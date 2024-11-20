@@ -48,7 +48,7 @@ public class TransactionRecordScheduled {
     @Resource
     NftMessageService nftMessageService;
 
-    @Scheduled(cron = "0 0/10 * * * ?")
+    @Scheduled(cron = "0 0/5 * * * ?")
     public void transactionRecord() {
         log.info("transactionRecord 开始执行");
 

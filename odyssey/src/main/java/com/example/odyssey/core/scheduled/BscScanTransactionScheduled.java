@@ -51,7 +51,7 @@ public class BscScanTransactionScheduled {
     @Value("${bsc.scan.transaction.url}")
     private String url;
 
-    @Scheduled(cron = "0 0/5 * * * ?")
+    @Scheduled(cron = "0 0/3 * * * ?")
     @SneakyThrows
     public void transactionAccountRecord() {
 
@@ -75,7 +75,7 @@ public class BscScanTransactionScheduled {
 
     }
 
-    @Scheduled(cron = "0 0/5 * * * ?")
+    @Scheduled(cron = "0 0/3 * * * ?")
     @SneakyThrows
     public void transactionLogRecord() {
 
