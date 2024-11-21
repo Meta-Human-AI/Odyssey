@@ -6,6 +6,7 @@ import com.example.odyssey.bean.cmd.*;
 import com.example.odyssey.bean.dto.NftMessageDTO;
 import com.example.odyssey.bean.dto.NftMessageMetadataDTO;
 import com.example.odyssey.bean.dto.NftMessageTotalDTO;
+import com.example.odyssey.bean.dto.NftStatisticsDTO;
 
 public interface NftMessageService {
 
@@ -22,4 +23,7 @@ public interface NftMessageService {
 
 
     SingleResponse<NftMessageMetadataDTO> getNftMessageMetadata(NftMessageMetadataQryCmd nftMessageMetadataQryCmd);
+
+
+    MultiResponse<NftStatisticsDTO> nftStatisticsList(NftStatisticsListQryCmd nftStatisticsListQryCmd);
 }

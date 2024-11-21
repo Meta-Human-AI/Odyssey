@@ -52,7 +52,8 @@ public class NftMessageServiceImpl implements NftMessageService {
     @Resource
     SystemConfigMapper systemConfigMapper;
     @Resource
-    RewardDistributionScheduled rewardDistributionScheduled;
+    NftDailyStatisticsMapper nftDailyStatisticsMapper;
+
 
     @Override
     public SingleResponse createNftMessage(NftMessageCreateCmd nftMessageCreateCmd) {
@@ -111,7 +112,7 @@ public class NftMessageServiceImpl implements NftMessageService {
 
                 try {
                     TimeUnit.SECONDS.sleep(1);
-                }catch (InterruptedException e){
+                } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
 
@@ -120,7 +121,7 @@ public class NftMessageServiceImpl implements NftMessageService {
 
         }
 
-    //    rewardDistributionScheduled.usdtRewardDistribution();
+        //    rewardDistributionScheduled.usdtRewardDistribution();
 
         return SingleResponse.buildSuccess();
     }
@@ -170,7 +171,7 @@ public class NftMessageServiceImpl implements NftMessageService {
                 nftMessageMapper.insert(nftMessage);
             } catch (DuplicateKeyException e) {
                 // 处理并发插入导致的唯一索引冲突
-                log.error("并发创建NFT{}",nftMessage.getTokenId());
+                log.error("并发创建NFT{}", nftMessage.getTokenId());
                 throw new RuntimeException("系统繁忙，请稍后重试");
             }
             nftMessageDTO.setTokenId(nftMessageQryCmd.getTokenId());
@@ -212,11 +213,11 @@ public class NftMessageServiceImpl implements NftMessageService {
             nftMessage.setBuyAddress(nftMessageTransferCmd.getBuyAddress());
         }
 
-        if (Objects.nonNull(nftMessageTransferCmd.getTransferTime())){
+        if (Objects.nonNull(nftMessageTransferCmd.getTransferTime())) {
             nftMessage.setTransferTime(nftMessageTransferCmd.getTransferTime());
         }
 
-        if (Objects.nonNull(nftMessageTransferCmd.getAirdropTime())){
+        if (Objects.nonNull(nftMessageTransferCmd.getAirdropTime())) {
             nftMessage.setAirdropTime(nftMessageTransferCmd.getAirdropTime());
         }
 
@@ -256,7 +257,7 @@ public class NftMessageServiceImpl implements NftMessageService {
             queryWrapper.eq("city", nftMessageListQryCmd.getCity());
         }
 
-        if (Objects.nonNull(nftMessageListQryCmd.getAirdrop()) && nftMessageListQryCmd.getAirdrop()){
+        if (Objects.nonNull(nftMessageListQryCmd.getAirdrop()) && nftMessageListQryCmd.getAirdrop()) {
             queryWrapper.isNull("buy_address");
         }
 
@@ -292,6 +293,30 @@ public class NftMessageServiceImpl implements NftMessageService {
                 nftMessageDTO.setState(stateEnum.getName());
             }
             nftMessageDTO.setCity(cityMap.get(nftMessage.getCity()));
+            if (Objects.nonNull(nftMessage.getBuyTime())) {
+                QueryWrapper<TransactionRecord> transactionRecordQueryWrapper = new QueryWrapper<>();
+                transactionRecordQueryWrapper.eq("token_id", nftMessage.getTokenId());
+                transactionRecordQueryWrapper.eq("action", ActionTypeEnum.BUY.getCode());
+                transactionRecordQueryWrapper.last("limit 1");
+
+                TransactionRecord transactionRecord = transactionRecordMapper.selectOne(transactionRecordQueryWrapper);
+                if (Objects.nonNull(transactionRecord)) {
+                    nftMessageDTO.setHash(transactionRecord.getTransactionHash());
+                }
+            }
+            if (Objects.nonNull(nftMessage.getAirdropTime())) {
+                QueryWrapper<TransactionRecord> transactionRecordQueryWrapper = new QueryWrapper<>();
+                transactionRecordQueryWrapper.eq("token_id", nftMessage.getTokenId());
+                transactionRecordQueryWrapper.eq("action", ActionTypeEnum.AIRDROP.getCode());
+                transactionRecordQueryWrapper.last("limit 1");
+
+                TransactionRecord transactionRecord = transactionRecordMapper.selectOne(transactionRecordQueryWrapper);
+                if (Objects.nonNull(transactionRecord)) {
+                    nftMessageDTO.setHash(transactionRecord.getTransactionHash());
+                }
+
+            }
+
             nftMessageDTOList.add(nftMessageDTO);
         }
         return MultiResponse.of(nftMessageDTOList, (int) nftMessagePage.getTotal());
@@ -341,7 +366,7 @@ public class NftMessageServiceImpl implements NftMessageService {
             QueryWrapper<TransactionRecord> transactionRecordQueryWrapper = new QueryWrapper<>();
             transactionRecordQueryWrapper.eq("token_id", nftMessage.getTokenId());
             transactionRecordQueryWrapper.eq("wallet_address", nftMessage.getNewAddress());
-            transactionRecordQueryWrapper.in("action", Arrays.asList(ActionTypeEnum.BUY.getCode(), ActionTypeEnum.TRANSFER_IN.getCode(),ActionTypeEnum.AIRDROP.getCode()));
+            transactionRecordQueryWrapper.in("action", Arrays.asList(ActionTypeEnum.BUY.getCode(), ActionTypeEnum.TRANSFER_IN.getCode(), ActionTypeEnum.AIRDROP.getCode()));
             transactionRecordQueryWrapper.orderByDesc("time");
             transactionRecordQueryWrapper.last("limit 1");
 
@@ -350,7 +375,7 @@ public class NftMessageServiceImpl implements NftMessageService {
                 nftMessageTotalDTO.setTime("");
                 nftMessageTotalDTO.setDay(0);
                 nftMessageTotalDTO.setRewardTotalNumber("0");
-            }else {
+            } else {
                 nftMessageTotalDTO.setTime(transactionRecord.getTime());
 
                 QueryWrapper<RewardDistributionRecord> rewardDistributionRecordQueryWrapper = new QueryWrapper<>();
@@ -373,8 +398,6 @@ public class NftMessageServiceImpl implements NftMessageService {
 
                 nftMessageTotalDTO.setRewardTotalNumber(rewardNumberTotal.toString());
             }
-
-
 
 
             nftMessageTotalDTOList.add(nftMessageTotalDTO);
@@ -427,17 +450,40 @@ public class NftMessageServiceImpl implements NftMessageService {
 
         NftMessageMetadataDetailDTO blockadeTime = new NftMessageMetadataDetailDTO();
         blockadeTime.setTrait_type("blockadeTime");
-        if (nftMessage.getBlockadeTime() > 0){
+        if (nftMessage.getBlockadeTime() > 0) {
             Date date = new Date(nftMessage.getBlockadeTime());
             SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             String time = simpleDateFormat.format(date);
             blockadeTime.setValue(time);
-        }else {
+        } else {
             blockadeTime.setValue("0");
         }
         nftMessageMetadataDetailDTOList.add(blockadeTime);
         nftMessageMetadataDTO.setAttributes(nftMessageMetadataDetailDTOList);
 
         return SingleResponse.of(nftMessageMetadataDTO);
+    }
+
+    @Override
+    public MultiResponse<NftStatisticsDTO> nftStatisticsList(NftStatisticsListQryCmd nftStatisticsListQryCmd) {
+
+        QueryWrapper<NftDailyStatistics> queryWrapper = new QueryWrapper<>();
+        if (Objects.nonNull(nftStatisticsListQryCmd.getDate())) {
+            queryWrapper.eq("date", nftStatisticsListQryCmd.getDate());
+        }
+
+        Page<NftDailyStatistics> nftDailyStatisticsPage = nftDailyStatisticsMapper.selectPage(Page.of(nftStatisticsListQryCmd.getPageNum(), nftStatisticsListQryCmd.getPageSize()), queryWrapper);
+
+        if (nftDailyStatisticsPage.getRecords().isEmpty()) {
+            return MultiResponse.of(new ArrayList<>());
+        }
+
+        List<NftStatisticsDTO> nftStatisticsDTOList = new ArrayList<>();
+        for (NftDailyStatistics nftDailyStatistics : nftDailyStatisticsPage.getRecords()) {
+            NftStatisticsDTO nftStatisticsDTO = new NftStatisticsDTO();
+            BeanUtils.copyProperties(nftDailyStatistics, nftStatisticsDTO);
+            nftStatisticsDTOList.add(nftStatisticsDTO);
+        }
+        return MultiResponse.of(nftStatisticsDTOList, (int) nftDailyStatisticsPage.getTotal());
     }
 }

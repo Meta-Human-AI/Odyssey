@@ -44,4 +44,16 @@ public class NftMessageDTO {
      * 购买时间
      */
     private String buyTime;
+    /**
+     * 交易hash
+     */
+    private String hash;
+    /**
+     * 空投时间
+     */
+    private String airdropTime;
+    /**
+     * 转入时间
+     */
+    private String transferTime;
 }
