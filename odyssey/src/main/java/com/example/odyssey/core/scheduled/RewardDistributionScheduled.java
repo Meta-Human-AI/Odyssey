@@ -364,6 +364,10 @@ public class RewardDistributionScheduled {
         if (Objects.nonNull(regionRecommendLog)) {
             return null;
         }
+        //队长自己的ods返佣
+        if(Objects.equals(rewardDistributionRecord.getWalletAddress(),rewardDistributionRecord.getRelationAddress())){
+            return null;
+        }
 
         regionRecommendLog = new RegionRecommendLog();
         regionRecommendLog.setRegionAddress(regionRecommend.getRegionAddress());
