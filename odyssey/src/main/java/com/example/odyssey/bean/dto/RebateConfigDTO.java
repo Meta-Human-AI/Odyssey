@@ -31,4 +31,8 @@ public class RebateConfigDTO {
      * 返利类型
      */
     private String rebateType;
+    /**
+     * 三级推荐人
+     */
+    private String threeRebateRate;
 }

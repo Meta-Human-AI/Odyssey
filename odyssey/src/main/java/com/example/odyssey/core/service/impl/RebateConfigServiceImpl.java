@@ -131,7 +131,7 @@ public class RebateConfigServiceImpl implements RebateConfigService {
 
         rebateConfig.setFirstRebateRate(rebateConfigUpdateCmd.getFirstRebateRate());
         rebateConfig.setSecondRebateRate(rebateConfigUpdateCmd.getSecondRebateRate());
-
+        rebateConfig.setThreeRebateRate(rebateConfigUpdateCmd.getThreeRebateRate());
         rebateConfigMapper.updateById(rebateConfig);
 
         return SingleResponse.buildSuccess();
