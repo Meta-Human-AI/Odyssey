@@ -474,6 +474,46 @@ public class RecommendServiceImpl implements RecommendService {
 
         }
 
+        // 添加USDT返佣配置(Leader)
+        RebateConfigCreateCmd usdtLeaderConfig = new RebateConfigCreateCmd();
+        usdtLeaderConfig.setAddress(recommendLeaderCreateCmd.getWalletAddress());
+        usdtLeaderConfig.setFirstRebateRate("0.5");
+        usdtLeaderConfig.setSecondRebateRate("0.1");
+        usdtLeaderConfig.setThreeRebateRate("0.05");
+        usdtLeaderConfig.setRecommendType(RecommendEnum.LEADER.getCode());
+        usdtLeaderConfig.setRebateType(RebateEnum.USDT.getCode());
+        rebateConfigService.add(usdtLeaderConfig);
+
+        // 添加ODS返佣配置(Leader)
+        RebateConfigCreateCmd odsLeaderConfig = new RebateConfigCreateCmd();
+        odsLeaderConfig.setAddress(recommendLeaderCreateCmd.getWalletAddress());
+        odsLeaderConfig.setFirstRebateRate("0.1");
+        odsLeaderConfig.setSecondRebateRate("0.1");
+        odsLeaderConfig.setThreeRebateRate("0.05");
+        odsLeaderConfig.setRecommendType(RecommendEnum.LEADER.getCode());
+        odsLeaderConfig.setRebateType(RebateEnum.ODS.getCode());
+        rebateConfigService.add(odsLeaderConfig);
+
+        // 添加USDT返佣配置(Normal)
+        RebateConfigCreateCmd usdtNormalConfig = new RebateConfigCreateCmd();
+        usdtNormalConfig.setAddress(recommendLeaderCreateCmd.getWalletAddress());
+        usdtNormalConfig.setFirstRebateRate("0.1");
+        usdtNormalConfig.setSecondRebateRate("0.1");
+        usdtNormalConfig.setThreeRebateRate("0.02");
+        usdtNormalConfig.setRecommendType(RecommendEnum.NORMAL.getCode());
+        usdtNormalConfig.setRebateType(RebateEnum.USDT.getCode());
+        rebateConfigService.add(usdtNormalConfig);
+
+        // 添加ODS返佣配置(Normal)
+        RebateConfigCreateCmd odsNormalConfig = new RebateConfigCreateCmd();
+        odsNormalConfig.setAddress(recommendLeaderCreateCmd.getWalletAddress());
+        odsNormalConfig.setFirstRebateRate("0.1");
+        odsNormalConfig.setSecondRebateRate("0.1");
+        odsNormalConfig.setThreeRebateRate("0.02");
+        odsNormalConfig.setRecommendType(RecommendEnum.NORMAL.getCode());
+        odsNormalConfig.setRebateType(RebateEnum.ODS.getCode());
+        rebateConfigService.add(odsNormalConfig);
+
         return SingleResponse.buildSuccess();
     }
 
