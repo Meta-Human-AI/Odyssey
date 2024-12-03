@@ -26,14 +26,14 @@ public class EmailUtil {
      */
     public String getEmailContent(String verificationCode) {
         String content = "Dear user, this is your hotel reservation verification code: " + verificationCode
-                + " please verify it on the platform within 5 minutes ";
+                + " please verify it on the platform within 5 minutes. ";
 
         return content;
     }
 
     public String getOrderExaminePassContent(String hotelName) {
 
-        String content = "Dear user, your hotel [" + hotelName + "] reservation has been approved. Please wait for the administrator to make a reservation for you";
+        String content = "Dear user, your hotel [" + hotelName + "] reservation has been approved. Please wait for the administrator to make a reservation for you.";
 
         return content;
     }
@@ -41,12 +41,12 @@ public class EmailUtil {
     public String getOrderExamineRejectContent(String hotelName, String reason) {
 
         if (StringUtils.hasLength(reason)) {
-            String content = "DDear user, we are very sorry to inform you that your hotel [" + hotelName + "] order has not been approved," +
-                    " The reason is [" + reason + "], if you have any questions, please contact us";
+            String content = "Dear user, we are very sorry to inform you that your hotel [" + hotelName + "] order has not been approved," +
+                    " The reason is [" + reason + "], if you have any questions, please contact us.";
             return content;
         } else {
             String content = "Dear user, we are very sorry to inform you that your hotel [" + hotelName + "] order has not been approved," +
-                    " if you have any questions, please contact us";
+                    " if you have any questions, please contact us.";
             return content;
         }
     }
@@ -54,7 +54,7 @@ public class EmailUtil {
 
     public String getOrderFinishContent(String hotelName) {
 
-        String content = "Dear user, congratulations! Your hotel [" + hotelName + "]reservation has been successfully booked";
+        String content = "Dear user, congratulations! Your hotel [" + hotelName + "]reservation has been successfully booked.";
 
         return content;
     }
@@ -64,11 +64,11 @@ public class EmailUtil {
 
         if (StringUtils.hasLength(reason)) {
             String content = "Dear user, we are very sorry to inform you that your hotel [" + hotelName + "]reservation was not successfully booked." +
-                    " The reason is [" + reason + "]. we apologize again. If there are any problems, please contact us";
+                    " The reason is [" + reason + "]. we apologize again. If there are any problems, please contact us.";
             return content;
         } else {
             String content = "Dear user, we are very sorry to inform you that your hotel [" + hotelName + "]reservation was not successfully booked." +
-                    " we apologize again. If there are any problems, please contact us";
+                    " we apologize again. If there are any problems, please contact us.";
             return content;
         }
     }

@@ -354,7 +354,7 @@ public class OrderServiceImpl implements OrderService {
             emailSendCmd.setEmail(order.getEmail());
             emailSendCmd.setHotelName(hotel.getName());
 
-            emailService.sendOrderFinishEmail(emailSendCmd);
+            emailService.sendOrderFailEmail(emailSendCmd);
         }else {
 
             //todo 发送邮件
@@ -363,7 +363,7 @@ public class OrderServiceImpl implements OrderService {
             emailSendCmd.setHotelName(hotel.getName());
             emailSendCmd.setReason(orderFinishCmd.getReason());
 
-            emailService.sendOrderFailEmail(emailSendCmd);
+            emailService.sendOrderFinishEmail(emailSendCmd);
         }
 
         return SingleResponse.buildSuccess();

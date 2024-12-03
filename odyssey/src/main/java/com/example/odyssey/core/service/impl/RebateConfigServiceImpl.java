@@ -13,18 +13,22 @@ import com.example.odyssey.common.RebateEnum;
 import com.example.odyssey.common.RecommendEnum;
 import com.example.odyssey.core.service.RebateConfigService;
 import com.example.odyssey.model.entity.RebateConfig;
+import com.example.odyssey.model.entity.Recommend;
 import com.example.odyssey.model.entity.SystemConfig;
 import com.example.odyssey.model.mapper.RebateConfigMapper;
+import com.example.odyssey.model.mapper.RecommendMapper;
 import com.example.odyssey.model.mapper.SystemConfigMapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -35,6 +39,9 @@ public class RebateConfigServiceImpl implements RebateConfigService {
 
     @Resource
     SystemConfigMapper systemConfigMapper;
+
+    @Resource
+    RecommendMapper recommendMapper;
 
     @Override
     public synchronized SingleResponse defaultAdd(RebateConfigCreateDefaultCmd rebateConfigCreateDefaultCmd) {
@@ -147,6 +154,17 @@ public class RebateConfigServiceImpl implements RebateConfigService {
 
         if (Objects.nonNull(rebateConfigListQryCmd.getAddress())) {
             queryWrapper.eq("address", rebateConfigListQryCmd.getAddress());
+        } else {
+
+            QueryWrapper<Recommend> recommendQueryWrapper = new QueryWrapper<>();
+            recommendQueryWrapper.eq("recommend_type", RecommendEnum.LEADER.getCode());
+            recommendQueryWrapper.isNull("first_recommend_wallet_address");
+
+            List<Recommend> recommends = recommendMapper.selectList(recommendQueryWrapper);
+            if (!CollectionUtils.isEmpty(recommends)) {
+                List<String> leaderAddress = recommends.stream().map(Recommend::getWalletAddress).collect(Collectors.toList());
+                queryWrapper.in("address", leaderAddress);
+            }
         }
 
         if (Objects.nonNull(rebateConfigListQryCmd.getRecommendType())) {

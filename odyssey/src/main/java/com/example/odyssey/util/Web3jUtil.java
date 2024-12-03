@@ -30,6 +30,12 @@ public class Web3jUtil {
     @Resource
     private Web3j web3j;
 
+    /**
+     *
+     * @param tokenId
+     * @param address 合约地址
+     * @return
+     */
     public NftLevelDTO getNftIdToLevel(Long tokenId, String address) {
 
         try {
