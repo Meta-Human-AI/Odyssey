@@ -16,7 +16,7 @@ public class AdminEmailController {
 
     @PostMapping("/send")
     public SingleResponse send(@RequestBody EmailSendCmd emailSendCmd) {
-        return emailService.sendEmail(emailSendCmd);
+        return emailService.sendCreateOrderEmail(emailSendCmd);
     }
 
 }

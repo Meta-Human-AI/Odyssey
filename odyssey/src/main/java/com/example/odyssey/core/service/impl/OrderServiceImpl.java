@@ -206,7 +206,7 @@ public class OrderServiceImpl implements OrderService {
                     emailSendCmd.setEmail(order.getEmail());
                     emailSendCmd.setHotelName(hotel.getName());
 
-                    emailService.sendOrderFinishEmail(emailSendCmd);
+                    emailService.sendOrderExaminePassEmail(emailSendCmd);
 
                 } else if (Objects.equals(orderExamineCmd.getStatus(), OrderStatusEnum.REJECT.getCode())) {
 
@@ -225,7 +225,7 @@ public class OrderServiceImpl implements OrderService {
                     emailSendCmd.setHotelName(hotel.getName());
                     emailSendCmd.setReason(orderExamineCmd.getReason());
 
-                    emailService.sendOrderFailEmail(emailSendCmd);
+                    emailService.sendOrderExamineRejectEmail(emailSendCmd);
 
                 }
 
