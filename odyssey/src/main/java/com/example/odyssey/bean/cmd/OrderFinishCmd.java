@@ -6,4 +6,9 @@ import lombok.Data;
 public class OrderFinishCmd {
 
     private Integer orderId;
+
+
+    private String status;
+
+    private String reason;
 }

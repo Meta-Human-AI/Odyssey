@@ -450,14 +450,15 @@ public class NftMessageServiceImpl implements NftMessageService {
 
         NftMessageMetadataDetailDTO blockadeTime = new NftMessageMetadataDetailDTO();
         blockadeTime.setTrait_type("blockadeTime");
-        if (nftMessage.getBlockadeTime() > 0) {
-            Date date = new Date(nftMessage.getBlockadeTime());
-            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            String time = simpleDateFormat.format(date);
-            blockadeTime.setValue(time);
-        } else {
-            blockadeTime.setValue("0");
-        }
+        blockadeTime.setValue(nftMessage.getBlockadeTime().toString());
+//        if (nftMessage.getBlockadeTime() > 0) {
+//            Date date = new Date(nftMessage.getBlockadeTime());
+//            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+//            String time = simpleDateFormat.format(date);
+//            blockadeTime.setValue(time);
+//        } else {
+//            blockadeTime.setValue("0");
+//        }
         nftMessageMetadataDetailDTOList.add(blockadeTime);
         nftMessageMetadataDTO.setAttributes(nftMessageMetadataDetailDTOList);
 

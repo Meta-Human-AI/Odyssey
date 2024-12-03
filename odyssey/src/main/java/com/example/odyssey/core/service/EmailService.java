@@ -9,7 +9,17 @@ public interface EmailService {
 
     SingleResponse createEmail(EmailCreateCmd emailCreateCmd);
 
-    SingleResponse sendEmail(EmailSendCmd emailSendCmd);
+    SingleResponse sendCreateOrderEmail(EmailSendCmd emailSendCmd);
+
+    SingleResponse sendOrderExaminePassEmail(EmailSendCmd emailSendCmd);
+
+    SingleResponse sendOrderExamineRejectEmail(EmailSendCmd emailSendCmd);
+
+    SingleResponse sendOrderFinishEmail(EmailSendCmd emailSendCmd);
+
+    SingleResponse sendOrderFailEmail(EmailSendCmd emailSendCmd);
+
+
 
     SingleResponse verifyEmail(EmailVerifyCmd emailVerifyCmd);
 }

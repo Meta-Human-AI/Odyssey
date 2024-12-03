@@ -45,8 +45,6 @@ public class EmailServiceImpl implements EmailService {
     @Resource
     OrderMapper orderMapper;
 
-    @Resource
-    SystemConfigMapper systemConfigMapper;
 
     @Value("${spring.mail.username}")
     private String from;
@@ -72,17 +70,8 @@ public class EmailServiceImpl implements EmailService {
 
     @SneakyThrows
     @Override
-    public SingleResponse sendEmail(EmailSendCmd emailSendCmd) {
+    public SingleResponse sendCreateOrderEmail(EmailSendCmd emailSendCmd) {
 
-//        QueryWrapper<SystemConfig> systemQueryWrapper = new QueryWrapper<>();
-
-//        systemQueryWrapper.eq("`key`", "url");
-//
-//        SystemConfig systemConfig = systemConfigMapper.selectOne(systemQueryWrapper);
-//
-//        if (Objects.isNull(systemConfig)) {
-//            return SingleResponse.buildFailure("URL configuration not found");
-//        }
 
         String verificationCode = emailUtil.getVerificationCode();
 
@@ -99,6 +88,74 @@ public class EmailServiceImpl implements EmailService {
 
         // todo 将验证码存入redis
         redisTemplate.opsForValue().set("ODYSSEY:EMAIL:VERIFICATION：" + verificationCode, emailSendCmd.getOrderId(), 5, TimeUnit.MINUTES);
+
+        return SingleResponse.buildSuccess();
+    }
+
+    @Override
+    public SingleResponse sendOrderExaminePassEmail(EmailSendCmd emailSendCmd) {
+
+        String emailContent = emailUtil.getOrderExaminePassContent(emailSendCmd.getHotelName());
+
+        // todo 发送邮件
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(from);
+        message.setTo(emailSendCmd.getEmail());
+        message.setSubject("Order Examine Pass");
+        message.setText(emailContent);
+
+        javaMailSender.send(message);
+
+        return SingleResponse.buildSuccess();
+    }
+
+    @Override
+    public SingleResponse sendOrderExamineRejectEmail(EmailSendCmd emailSendCmd) {
+
+        String emailContent = emailUtil.getOrderExamineRejectContent(emailSendCmd.getHotelName(), emailSendCmd.getReason());
+
+        // todo 发送邮件
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(from);
+        message.setTo(emailSendCmd.getEmail());
+        message.setSubject("Order Examine Reject");
+        message.setText(emailContent);
+
+        javaMailSender.send(message);
+
+        return SingleResponse.buildSuccess();
+    }
+
+    @Override
+    public SingleResponse sendOrderFinishEmail(EmailSendCmd emailSendCmd) {
+
+        String emailContent = emailUtil.getOrderFinishContent(emailSendCmd.getHotelName());
+
+        // todo 发送邮件
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(from);
+        message.setTo(emailSendCmd.getEmail());
+        message.setSubject("Order Finish");
+        message.setText(emailContent);
+
+        javaMailSender.send(message);
+
+        return SingleResponse.buildSuccess();
+    }
+
+    @Override
+    public SingleResponse sendOrderFailEmail(EmailSendCmd emailSendCmd) {
+
+        String emailContent = emailUtil.getOrderFailContent(emailSendCmd.getHotelName(), emailSendCmd.getReason());
+
+        // todo 发送邮件
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(from);
+        message.setTo(emailSendCmd.getEmail());
+        message.setSubject("Order Fail");
+        message.setText(emailContent);
+
+        javaMailSender.send(message);
 
         return SingleResponse.buildSuccess();
     }

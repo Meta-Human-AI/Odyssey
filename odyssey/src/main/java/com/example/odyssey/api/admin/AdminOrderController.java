@@ -65,6 +65,7 @@ public class AdminOrderController {
      */
     @PostMapping("/page")
     MultiResponse<OrderDTO> listOrder(@RequestBody OrderListQryCmd orderListQryCmd) {
+        orderListQryCmd.setIsAdmin(Boolean.TRUE);
         return orderService.listOrder(orderListQryCmd);
     }
 

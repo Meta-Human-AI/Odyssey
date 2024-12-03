@@ -68,4 +68,6 @@ public class OrderListQryCmd extends PageQuery {
     private String examineStartTime;
 
     private String examineEndTime;
+
+    private Boolean isAdmin;
 }

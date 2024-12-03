@@ -15,6 +15,8 @@ public enum OrderStatusEnum {
 
     CANCEL("cancel", "已取消"),
 
+    FAIL("fail", "预定失败"),
+
     FINISH("finish", "已完成");
 
     private String code;

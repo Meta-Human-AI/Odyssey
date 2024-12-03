@@ -13,5 +13,9 @@ public class EmailSendCmd {
      */
     private Integer orderId;
 
+    private String hotelName;
+
+    private String reason;
+
 
 }

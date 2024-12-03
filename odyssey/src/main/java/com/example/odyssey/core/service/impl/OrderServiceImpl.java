@@ -15,9 +15,12 @@ import com.example.odyssey.core.service.EmailService;
 import com.example.odyssey.core.service.OrderService;
 import com.example.odyssey.model.entity.*;
 import com.example.odyssey.model.mapper.*;
+import com.example.odyssey.util.EmailUtil;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -50,6 +53,10 @@ public class OrderServiceImpl implements OrderService {
     HotelMapper hotelMapper;
     @Resource
     CityMapper cityMapper;
+    @Resource
+    JavaMailSender javaMailSender;
+    @Resource
+    EmailUtil emailUtil;
 
     @Override
     public SingleResponse createOrder(OrderCreateCmd orderCreateCmd) {
@@ -91,7 +98,7 @@ public class OrderServiceImpl implements OrderService {
                 emailSendCmd.setEmail(orderCreateCmd.getEmail());
                 emailSendCmd.setOrderId(order.getId());
 
-                emailService.sendEmail(emailSendCmd);
+                emailService.sendCreateOrderEmail(emailSendCmd);
 
                 Integer blockadeDay = 90;
 
@@ -190,6 +197,38 @@ public class OrderServiceImpl implements OrderService {
 
                 orderMapper.updateById(order);
 
+                Hotel hotel = hotelMapper.selectById(order.getHotelId());
+
+                if (Objects.equals(orderExamineCmd.getStatus(), OrderStatusEnum.PASS.getCode())) {
+
+                    //todo 发送邮件
+                    EmailSendCmd emailSendCmd = new EmailSendCmd();
+                    emailSendCmd.setEmail(order.getEmail());
+                    emailSendCmd.setHotelName(hotel.getName());
+
+                    emailService.sendOrderFinishEmail(emailSendCmd);
+
+                } else if (Objects.equals(orderExamineCmd.getStatus(), OrderStatusEnum.REJECT.getCode())) {
+
+                    QueryWrapper<NftMessage> queryWrapper = new QueryWrapper<>();
+                    queryWrapper.eq("token_id", order.getTokenId());
+                    NftMessage nftMessage = nftMessageMapper.selectOne(queryWrapper);
+
+                    if (Objects.nonNull(nftMessage)) {
+                        nftMessage.setBlockadeTime(0L);
+                        nftMessageMapper.updateById(nftMessage);
+                    }
+
+                    //todo 发送邮件
+                    EmailSendCmd emailSendCmd = new EmailSendCmd();
+                    emailSendCmd.setEmail(order.getEmail());
+                    emailSendCmd.setHotelName(hotel.getName());
+                    emailSendCmd.setReason(orderExamineCmd.getReason());
+
+                    emailService.sendOrderFailEmail(emailSendCmd);
+
+                }
+
                 return SingleResponse.buildSuccess();
             }
         } catch (InterruptedException e) {
@@ -223,7 +262,7 @@ public class OrderServiceImpl implements OrderService {
         emailSendCmd.setEmail(order.getEmail());
         emailSendCmd.setOrderId(order.getId());
 
-        emailService.sendEmail(emailSendCmd);
+        emailService.sendCreateOrderEmail(emailSendCmd);
 
         return SingleResponse.buildSuccess();
     }
@@ -294,9 +333,38 @@ public class OrderServiceImpl implements OrderService {
         }
 
         order.setFinishTime(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-        order.setStatus(OrderStatusEnum.FINISH.getCode());
+        order.setStatus(orderFinishCmd.getStatus());
+        order.setReason(orderFinishCmd.getReason());
 
         orderMapper.updateById(order);
+
+        Hotel hotel = hotelMapper.selectById(order.getHotelId());
+
+        if (orderFinishCmd.getStatus().equals(OrderStatusEnum.FAIL.getCode())) {
+            QueryWrapper<NftMessage> queryWrapper = new QueryWrapper<>();
+            queryWrapper.eq("token_id", order.getTokenId());
+            NftMessage nftMessage = nftMessageMapper.selectOne(queryWrapper);
+
+            if (Objects.nonNull(nftMessage)) {
+                nftMessage.setBlockadeTime(0L);
+                nftMessageMapper.updateById(nftMessage);
+            }
+
+            EmailSendCmd emailSendCmd = new EmailSendCmd();
+            emailSendCmd.setEmail(order.getEmail());
+            emailSendCmd.setHotelName(hotel.getName());
+
+            emailService.sendOrderFinishEmail(emailSendCmd);
+        }else {
+
+            //todo 发送邮件
+            EmailSendCmd emailSendCmd = new EmailSendCmd();
+            emailSendCmd.setEmail(order.getEmail());
+            emailSendCmd.setHotelName(hotel.getName());
+            emailSendCmd.setReason(orderFinishCmd.getReason());
+
+            emailService.sendOrderFailEmail(emailSendCmd);
+        }
 
         return SingleResponse.buildSuccess();
     }
@@ -317,15 +385,9 @@ public class OrderServiceImpl implements OrderService {
         if (Objects.nonNull(orderListQryCmd.getHotelId())) {
             queryWrapper.eq("hotel_id", orderListQryCmd.getHotelId());
         }
-//        if (Objects.nonNull(orderListQryCmd.getHotelState())) {
-//            queryWrapper.eq("hotel_state", orderListQryCmd.getHotelState());
-//        }
-//        if (Objects.nonNull(orderListQryCmd.getHotelCity())) {
-//            queryWrapper.eq("hotel_city", orderListQryCmd.getHotelCity());
-//        }
-//        if (Objects.nonNull(orderListQryCmd.getHotelAddress())) {
-//            queryWrapper.like("hotel_address", orderListQryCmd.getHotelAddress());
-//        }
+        if (Objects.nonNull(orderListQryCmd.getIsAdmin())&&orderListQryCmd.getIsAdmin()) {
+            queryWrapper.ne("status", OrderStatusEnum.AUTHENTICATION.getCode());
+        }
         if (Objects.nonNull(orderListQryCmd.getName())) {
             queryWrapper.like("name", orderListQryCmd.getName());
         }
