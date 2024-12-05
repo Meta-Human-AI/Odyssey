@@ -25,8 +25,25 @@ public class EmailUtil {
      * @return
      */
     public String getEmailContent(String verificationCode) {
-        String content = "Dear user, this is your hotel reservation verification code: " + verificationCode
-                + " please verify it on the platform within 5 minutes. ";
+        String content = "<!DOCTYPE html>" +
+                "<html>" +
+                "<head>" +
+                "<meta charset=\"UTF-8\">" +
+                "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">" +
+                "</head>" +
+                "<body style='font-family: Arial, sans-serif;'>" +
+                "<div style='max-width: 600px; margin: 0 auto; padding: 20px;'>" +
+                "<p>Hotel Reservation Verification Code</p>" +
+                "<p>Dear User</p>" +
+                "<p>Thank you for choosing our service! To ensure the security of your reservation, please verify your booking using the code below within the next 5 minutes:</p>" +
+                "<p>Verification Code: <span style='font-size: 24px; font-weight: bold; color: #333;'>" + verificationCode + "</span></p>" +
+                "<p>Simply enter this code on the platform to complete your verification. If you did not request this, please contact our support team immediately.</p>" +
+                "<p>We will do our utmost to ensure your extraordinary journey!</p>" +
+                "<p>Warm regards,<br>" +
+                "Support Team<br>" +
+                "[reservation@odysseyglobal.io | Contact Team | Website Link]</p>" +
+                "</div>" +
+                "</body></html>";
 
         return content;
     }
