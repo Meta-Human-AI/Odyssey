@@ -95,7 +95,9 @@ public class EmailServiceImpl implements EmailService {
     @Override
     public SingleResponse sendOrderExaminePassEmail(EmailSendCmd emailSendCmd) {
 
-        String emailContent = emailUtil.getOrderExaminePassContent(emailSendCmd.getHotelName());
+        String emailContent = emailUtil.getOrderSuccessContent(emailSendCmd.getOrderId().toString(),
+                emailSendCmd.getStartTime(),emailSendCmd.getEndTime(),
+                emailSendCmd.getAddress(),emailSendCmd.getHotelName());
 
         // todo 发送邮件
         SimpleMailMessage message = new SimpleMailMessage();
@@ -112,8 +114,8 @@ public class EmailServiceImpl implements EmailService {
     @Override
     public SingleResponse sendOrderExamineRejectEmail(EmailSendCmd emailSendCmd) {
 
-        String emailContent = emailUtil.getOrderExamineRejectContent(emailSendCmd.getHotelName(), emailSendCmd.getReason());
-
+        String emailContent = emailUtil.getOrderFailureContent(emailSendCmd.getOrderId().toString(),emailSendCmd.getExamineTime(),
+                emailSendCmd.getHotelName(),emailSendCmd.getAddress(),emailSendCmd.getReason());
         // todo 发送邮件
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom(from);

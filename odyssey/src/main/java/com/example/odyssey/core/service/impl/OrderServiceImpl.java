@@ -204,6 +204,10 @@ public class OrderServiceImpl implements OrderService {
                     //todo 发送邮件
                     EmailSendCmd emailSendCmd = new EmailSendCmd();
                     emailSendCmd.setEmail(order.getEmail());
+                    emailSendCmd.setOrderId(order.getId());
+                    emailSendCmd.setStartTime(order.getStartTime());
+                    emailSendCmd.setEndTime(order.getEndTime());
+                    emailSendCmd.setAddress(order.getAddress());
                     emailSendCmd.setHotelName(hotel.getName());
 
                     emailService.sendOrderExaminePassEmail(emailSendCmd);
@@ -223,6 +227,9 @@ public class OrderServiceImpl implements OrderService {
                     EmailSendCmd emailSendCmd = new EmailSendCmd();
                     emailSendCmd.setEmail(order.getEmail());
                     emailSendCmd.setHotelName(hotel.getName());
+                    emailSendCmd.setOrderId(order.getId());
+                    emailSendCmd.setAddress(order.getAddress());
+                    emailSendCmd.setExamineTime(order.getExamineTime());
                     emailSendCmd.setReason(orderExamineCmd.getReason());
 
                     emailService.sendOrderExamineRejectEmail(emailSendCmd);

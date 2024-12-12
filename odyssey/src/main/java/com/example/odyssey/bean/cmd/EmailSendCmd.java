@@ -15,6 +15,21 @@ public class EmailSendCmd {
 
     private String hotelName;
 
+    private String address;
+
+    /**
+     * 入住时间
+     */
+    private String startTime;
+    /**
+     * 离店时间
+     */
+    private String endTime;
+    /**
+     * 审核时间
+     */
+    private String examineTime;
+
     private String reason;
 
 

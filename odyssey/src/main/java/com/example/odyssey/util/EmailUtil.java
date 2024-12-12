@@ -104,5 +104,71 @@ public class EmailUtil {
         return pattern.matcher(email).matches();
     }
 
+    public String getOrderSuccessContent(String reservationId, String checkInDate, String checkOutDate, String guestName, String hotelName) {
+        String content = "<!DOCTYPE html>" +
+                "<html>" +
+                "<head>" +
+                "<meta charset=\"UTF-8\">" +
+                "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">" +
+                "</head>" +
+                "<body style='font-family: Arial, sans-serif;'>" +
+                "<div style='max-width: 600px; margin: 0 auto; padding: 20px;'>" +
+                "<h2>Your Reservation is Confirmed! 🎉</h2>" +
+                "<p>Dear " + guestName + ",</p>" +
+                "<p>Thank you for choosing our service! We are delighted to inform you that your reservation has been successfully processed.</p>" +
+                "<h3>Reservation Details:</h3>" +
+                "<ul style='list-style: none; padding: 0;'>" +
+                "<li><strong>Reservation ID:</strong> " + reservationId + "</li>" +
+                "<li><strong>Check-in Date:</strong> " + checkInDate + "</li>" +
+                "<li><strong>Check-out Date:</strong> " + checkOutDate + "</li>" +
+                "<li><strong>Guest Wallet Address:</strong> " + guestName + "</li>" +
+                "<li><strong>Hotel Name:</strong> " + hotelName + "</li>" +
+                "</ul>" +
+                "<p>If you have any questions or need further assistance, feel free to reach out to our support team. We are here to help!</p>" +
+                "<p>Looking forward to being part of your unforgettable journey.</p>" +
+                "<p>Warm regards,<br>" +
+                "Support Team<br>" +
+                "[reservation@odysseyglobal.io | Contact Team | Website Link]</p>" +
+                "</div>" +
+                "</body></html>";
+
+        return content;
+    }
+
+    public String getOrderFailureContent(String reservationId, String attemptDate, String hotelName, String guestName, String reason) {
+        String content = "<!DOCTYPE html>" +
+                "<html>" +
+                "<head>" +
+                "<meta charset=\"UTF-8\">" +
+                "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">" +
+                "</head>" +
+                "<body style='font-family: Arial, sans-serif;'>" +
+                "<div style='max-width: 600px; margin: 0 auto; padding: 20px;'>" +
+                "<h2>Important: Your Reservation Could Not Be Processed ⚠️</h2>" +
+                "<p>Dear " + guestName + ",</p>" +
+                "<p>We regret to inform you that your reservation attempt was not successful.</p>" +
+                "<h3>Details of the Failed Transaction:</h3>" +
+                "<ul style='list-style: none; padding: 0;'>" +
+                "<li><strong>Attempted Reservation ID:</strong> " + reservationId + "</li>" +
+                "<li><strong>Date of Attempt:</strong> " + attemptDate + "</li>" +
+                "<li><strong>Hotel Name:</strong> " + hotelName + "</li>" +
+                "</ul>" +
+                "<h3>Reason for Failure:</h3>" +
+                "<p>" + (StringUtils.hasLength(reason) ? reason : "Technical issues occurred during the booking process.") + "</p>" +
+                "<h3>Recommended Actions:</h3>" +
+                "<ul>" +
+                "<li>Verify your payment details</li>" +
+                "<li>Try to rebook the room via our website</li>" +
+                "<li>Contact our support team for assistance</li>" +
+                "</ul>" +
+                "<p>We apologize for any inconvenience caused and are committed to helping you secure your booking as soon as possible.</p>" +
+                "<p>Warm regards,<br>" +
+                "Support Team<br>" +
+                "[reservation@odysseyglobal.io | Contact Team | Website Link]</p>" +
+                "</div>" +
+                "</body></html>";
+
+        return content;
+    }
 
 }
